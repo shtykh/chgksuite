@@ -2,6 +2,7 @@ package shtykh.util;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.text.DateFormat;
@@ -161,7 +162,7 @@ public class Util {
 		}
 	}
 
-	public static File saveFile(InputStream uploadedInputStream,
+	public static File saveFile(MultipartFile multipartFile,
 								String serverLocation, String fileName) throws IOException {
 		File directory = new File(serverLocation);
 		directory.mkdirs();
@@ -171,11 +172,7 @@ public class Util {
 			file = new File(directory + "/" + fileName + "(" + i + ")");
 		}
 		try(OutputStream outpuStream = new FileOutputStream(file)){
-			int read = 0;
-			byte[] bytes = new byte[1024];
-			while ((read = uploadedInputStream.read(bytes)) != -1) {
-				outpuStream.write(bytes, 0, read);
-			}
+			outpuStream.write(multipartFile.getBytes());
 			outpuStream.flush();
 			outpuStream.close();
 			return file;

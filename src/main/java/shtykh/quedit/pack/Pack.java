@@ -1,9 +1,9 @@
 package shtykh.quedit.pack;
 
-import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.research.ws.wadl.HTTPMethods;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.springframework.web.multipart.MultipartFile;
 import shtykh.quedit._4s.Parser4s;
 import shtykh.quedit._4s._4Sable;
 import shtykh.quedit.author.Authored;
@@ -35,7 +35,6 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -72,7 +71,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		initActions();
 	}
 
-	public Response home() {
+	public String home() {
 		refresh();
 		ColoredTable questionsTable;
 		URI uriHome;
@@ -110,17 +109,17 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 						questionsTable.toString() + "<br>" +
 						href(uriNew, "Добавить вопрос №" + numerator().getNumber(size())) + "<br>" +
 						"";
-		return Response.status(Response.Status.OK).entity(htmlPage(getName(), hrefHome, body)).build();
+		return htmlPage(getName(), hrefHome, body);
 	}
 
 
-	public Response info() {
+	public String info() {
 		refresh();
 		URI uriHome;
 		URI uriAuthors;
 		try {
 			uriHome = uri("");
-			uriAuthors = htmlHelper.uriBuilder("/quedit/rest/authors/list").build();
+			uriAuthors = htmlHelper.uriBuilder("/authors/list").build();
 		} catch (Exception e) {
 			return error(e);
 		}
@@ -134,7 +133,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 				removeTesterAction.buildForm(authors) + "<br>" +
 				href(uriAuthors, "Каталог персонажей") + "<br>" +
 				"";
-		return Response.status(Response.Status.OK).entity(htmlPage(getName(), hrefHome, body)).build();
+		return htmlPage(getName(), hrefHome, body);
 	}
 	
 	private void initActions() {
@@ -203,7 +202,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return folderPath() + ".info";
 	}
 
-	public Response editPack(
+	public String editPack(
 			 String name,
 			 String nameLJ,
 			 String date,
@@ -219,31 +218,27 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return info();
 	}
 
-	public Response uploadForm(String what) {
-		return Response.ok(htmlPage("Загрузите файл", buildUploadForm(address("upload" + "/" + what)))).build();
+	public String uploadForm(String what) {
+		return htmlPage("Загрузите файл", buildUploadForm(address("upload" + "/" + what)));
 	}
 
-	public Response upload_file(
-			  InputStream fileInputStream,
-			  FormDataContentDisposition contentDispositionHeader) {
+	public String upload_file(MultipartFile multipartFile) {
 		try{
 			String folderPath = folder + "/uploads";
-			File file = saveFile(fileInputStream, folderPath, contentDispositionHeader.getFileName());
+			File file = saveFile(multipartFile, folderPath, "file");
 			String output = "File saved to server location : " + file;
-			return Response.status(200).entity(output).build();
+			return output;
 		} catch (Exception e) {
 			return error(e);
 		}
 	}
 
-	public Response upload_4s(
-			  InputStream fileInputStream,
-			  FormDataContentDisposition contentDispositionHeader) {
+	public String upload_4s(MultipartFile multipartFile) {
 		try{
 			String folderPath = folder.getAbsolutePath();
 			clearFolder();
-			File file = saveFile(fileInputStream, folderPath, contentDispositionHeader.getFileName());
-			Parser4s parser4s = new Parser4s(folderPath);
+			File file = saveFile(multipartFile, folderPath, "4s.4s");
+			Parser4s parser4s = new Parser4s(file.getAbsolutePath());
 			this.fromParser(parser4s);
 			file.delete();
 			return home();
@@ -252,13 +247,11 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 	}
 
-	public Response upload_pic(
-			InputStream fileInputStream,
-			FormDataContentDisposition contentDispositionHeader) {
+	public String upload_pic(MultipartFile multipartFile) {
 		new File(folder + "/pics").mkdirs();
 		try {
 			String folderPath = folder + "/pics";
-			File file = saveFile(fileInputStream, folderPath, contentDispositionHeader.getFileName());
+			File file = saveFile(multipartFile, folderPath, "pic.png");
 			FormBuilder formBuilder = new FormBuilder(address("addPicture"));
 			formBuilder
 					.addMember(new FormParameter<>(
@@ -279,7 +272,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 	}
 
-	public Response editForm(int index) {
+	public String editForm(int index) {
 		Question question = get(index);
 		if (question == null) {
 			question = Question.mock();
@@ -289,13 +282,10 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 		question.setNumber(numerator().getNumber(question.index()));
 		String body = questionHtml(question) + editQuestionAction.buildForm(question);
-		return Response
-				.status(Response.Status.OK)
-				.entity(htmlPage("Отредактируйте вопрос", body))
-				.build();
+		return htmlPage("Отредактируйте вопрос", body);
 	}
 
-	public Response editAuthorForm( int index) throws URISyntaxException {
+	public String editAuthorForm( int index) throws URISyntaxException {
 		Question question = get(index);
 		if (question == null) {
 			question = Question.mock();
@@ -308,19 +298,16 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		String body = questionHtml(question) + "<br>"
 				+ editAuthorAction.buildForm(question)
 				+ removeAuthorAction.buildForm(question)
-				+ href(htmlHelper.uriBuilder("/quedit/rest/authors/list").build(), "Каталог персонажей");
-		return Response
-				.status(Response.Status.OK)
-				.entity(htmlPage("Добавить автора", body))
-				.build();
+				+ href(htmlHelper.uriBuilder("/authors/list").build(), "Каталог персонажей");
+		return htmlPage("Добавить автора", body);
 	}
 
-	public Response removeMethod(int index) {
+	public String removeMethod(int index) {
 		super.remove(index);
 		return home();
 	}
 
-	public Response addPicture(String number, String path) {
+	public String addPicture(String number, String path) {
 		try{
 			int index = numerator().getIndex(number);
 			Question q = get(index);
@@ -331,22 +318,22 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 	}
 
-	public Response replace(int index) throws IOException {
+	public String replace(int index) throws IOException {
 		super.replace(index, "zapas");
 		return home();
 	}
 
-	public Response upMethod( int index) {
+	public String upMethod( int index) {
 		super.up(index);
 		return home();
 	}
 
-	public Response downMethod( int index) {
+	public String downMethod( int index) {
 		super.down(index);
 		return home();
 	}
 
-  	public Response edit(
+  	public String edit(
 			 int index,
 			 String unaudible,
 			 String color,
@@ -374,7 +361,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return home();
 	}
 
-	public Response editAuthor(
+	public String editAuthor(
 			 int index,
 			 String author
 	) {
@@ -385,7 +372,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return editForm(index);
 	}
 
-	public Response removeAuthor(
+	public String removeAuthor(
 			int index,
 			String author
 	) {
@@ -395,7 +382,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return editForm(index);
 	}
 
-	public Response nextColor(
+	public String nextColor(
 			 int index,
 			 String colorHex
 	) {
@@ -417,12 +404,12 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return home();
 	}
 
-	public Response text() throws IOException {
+	public String text() throws IOException {
 		String text4s = to4s();
-		return Response.ok(htmlPage(getName(), "", text4s.replace("\n", "<br>"))).build();
+		return htmlPage(getName(), "", text4s.replace("\n", "<br>"));
 	}
 
-	public Response compose( String outFormat,  boolean debug) throws IOException {
+	public String compose( String outFormat,  boolean debug) throws IOException {
 		StringLogger logs = new StringLogger(log, debug);
 		String text4s = to4s();
 		logs.debug("text generated in 4s");
@@ -450,7 +437,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 		//template.delete();
 		//logs.debug(template + " was deleted");
-		return Response.ok(htmlPage("Выгрузка", logs.toString().replace("\n", "<br>"))).build();
+		return htmlPage("Выгрузка", logs.toString().replace("\n", "<br>"));
 	}
 
 	public Response downloadDocFile( String path) {
@@ -461,7 +448,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 	
 	public String base(){
-		return "/quedit/rest/pack/" + id;
+		return "/" + id;
 	}
 	
 	public HtmlHelper htmlHelper() {
@@ -546,7 +533,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		item.setNumber(numerator().getNumber(number));
 	}
 
-	public Response addEditor(String name) {
+	public String addEditor(String name) {
 		if (authors == null) {
 			throw new RuntimeException("Authors were null");
 		}
@@ -555,7 +542,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return info();
 	}
 
-	public Response removeEditor(String name) {
+	public String removeEditor(String name) {
 		if (authors == null) {
 			throw new RuntimeException("Authors were null");
 		}
@@ -564,7 +551,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return info();
 	}
 
-	public Response addTester(String name) {
+	public String addTester(String name) {
 		if (authors == null) {
 			throw new RuntimeException("Authors were null");
 		}
@@ -573,7 +560,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return info();
 	}
 	
-	public Response removeTester(String name) {
+	public String removeTester(String name) {
 		if (authors == null) {
 			throw new RuntimeException("Authors were null");
 		}
@@ -598,7 +585,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	public static void main(String[] args) throws IOException {
 		Pack pack = new Pack("pack0", new HtmlHelper(), new AuthorsCatalogue());
 		//System.out.println(pack.home().getEntity());
-		System.out.println(pack.compose("docx", true).getEntity());
+		System.out.println(pack.compose("docx", true));
 	}
 
 	private static String[] chgkComposeCmd(String... parameters) throws FileNotFoundException {

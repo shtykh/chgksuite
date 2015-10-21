@@ -3,7 +3,6 @@ package shtykh.util.html;
 import org.apache.http.client.utils.URIBuilder;
 import shtykh.util.html.param.Parameter;
 
-import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -18,7 +17,7 @@ public class HtmlHelper {
 	private final int port;
 
 	private static final String HOST = "localhost";
-	private static final int PORT = 8888;
+	private static final int PORT = 8080;
 
 	public HtmlHelper(String host, int port) {
 		this.host = host;
@@ -87,16 +86,16 @@ public class HtmlHelper {
 				.build(value);
 	}
 
-	public static Response error(Exception e) {
-		return Response.status(500).entity(htmlPage("Ошибка", e.getClass() + ": " + e.getMessage())).build();
+	public static String error(Exception e) {
+		return htmlPage("Ошибка", e.getClass() + ": " + e.getMessage());
 	}
 
-	public Response listResponce(String title, String... s) {
+	public String listResponce(String title, String... s) {
 		StringBuilder sb = new StringBuilder();
 		for (String s1 : s) {
 			sb.append(s1).append("<br>");
 		}
-		return Response.ok(htmlPage(title, sb.toString())).build();
+		return htmlPage(title, sb.toString());
 	}
 
 	private static class HtmlBuilder {

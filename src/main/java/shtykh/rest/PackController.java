@@ -1,22 +1,21 @@
 package shtykh.rest;
 
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.FormDataParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import shtykh.quedit.pack.Pack;
 import shtykh.util.Util;
 import shtykh.util.catalogue.FolderKeaper;
 import shtykh.util.html.HtmlHelper;
 import shtykh.util.html.TableBuilder;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -32,7 +31,7 @@ import static shtykh.util.html.HtmlHelper.htmlPage;
  */
 
 @Component
-@Path("/pack")
+@Controller
 public class PackController extends FolderKeaper {
 	private Map<String, Pack> packs = new TreeMap<>();
 
@@ -54,7 +53,7 @@ public class PackController extends FolderKeaper {
 	public void refreshFile(File file) {
 		try {
 			addPack(file.getName());
-		} 
+		}
 		catch (FileNotFoundException ignored) {}
 	}
 
@@ -63,13 +62,13 @@ public class PackController extends FolderKeaper {
 		return file.isDirectory();
 	}
 
-	private Response getOr404(String id, String methodName, Object... args) {
+	private String getOr404(String id, String methodName, Object... args) {
 		Pack pack = packs.get(id);
 		if (pack == null) {
-			return Response.status(404).build();
+			return (String) Response.status(404).build().getEntity();
 		} else {
 			try {
-				return (Response) findMethodByName(Pack.class, methodName).invoke(pack, args);
+				return (String) findMethodByName(Pack.class, methodName).invoke(pack, args);
 			} catch (NoSuchMethodException | InvocationTargetException | ClassCastException | IllegalAccessException e) {
 				throw new RuntimeException(e);
 			}
@@ -85,40 +84,40 @@ public class PackController extends FolderKeaper {
 		throw new NoSuchMethodException(clazz.toString() + "::" + methodName);
 	}
 
-	@GET
-	@Path("/")
-	public Response all() throws IOException, URISyntaxException {
+	@ResponseBody
+	@RequestMapping("packs")
+	public String all() throws IOException, URISyntaxException {
 		refresh();
 		TableBuilder table = new TableBuilder();
 		for (String id : packs.keySet()) {
-			URI editUri = htmlHelper.uriBuilder("/quedit/rest/pack/" + id).build();
+			URI editUri = htmlHelper.uriBuilder("/" + id).build();
 			table.addRow(href(editUri, packs.get(id).getName()));
 		}
-		URI addUri = htmlHelper.uriBuilder("/quedit/rest/pack/new").build();
+		URI addUri = htmlHelper.uriBuilder("/new").build();
 		table.addRow(href(addUri, "Новый пакет"));
-		return Response.ok(htmlPage("Пакеты", table.buildHtml())).build();
+		return htmlPage("Пакеты", table.buildHtml());
 	}
-	
-	@GET
-	@Path("{id}")
-	public Response getPack(@PathParam("id") String id) throws IOException {
+
+	@ResponseBody
+	@RequestMapping("{id}")
+	public String getPack(@PathVariable("id") String id) throws IOException {
 		if (id.equals("new")) {
-			return Response.ok(htmlPage("Новый пакет", "Впишите id пакета в адресную строку вместо \"new\"")).build();
+			return htmlPage("Новый пакет", "Впишите id пакета в адресную строку вместо \"new\"");
 		}
 		Pack pack = packs.get(id);
 		if (pack == null) {
 			String namePattern = Util.readProperty("quedit.properties", "namePattern");
 			if (!id.matches(namePattern)) {
-				return Response.status(500).entity(htmlPage("Придумайте id попроще!", namePattern)).build();
+				return htmlPage("Придумайте id попроще!", namePattern);
 			}
 			pack = addPack(id);
 		}
 		return pack.home();
 	}
 
-	@GET
-	@Path("{id}/info")
-	public Response info(@PathParam("id") String id) throws IOException {
+	@ResponseBody
+	@RequestMapping("{id}/info")
+	public String info(@PathVariable("id") String id) throws IOException {
 		return getOr404(id, "info");
 	}
 
@@ -128,191 +127,185 @@ public class PackController extends FolderKeaper {
 		return pack;
 	}
 
-	@GET
-	@Path("{id}/editPack")
-	public Response editPack(
-			@PathParam("id") String id,
-			@QueryParam("name") String name,
-			@QueryParam("nameLJ") String nameLJ,
-			@QueryParam("date") String date,			
-			@QueryParam("first") int first,
-			@QueryParam("zeroNumbers") String zeroNumbers,
-			@QueryParam("metaInfo") String metaInfo
+	@ResponseBody
+	@RequestMapping("{id}/editPack")
+	public String editPack(
+			@PathVariable("id") String id,
+			@RequestParam("name") String name,
+			@RequestParam("nameLJ") String nameLJ,
+			@RequestParam("date") String date,
+			@RequestParam("first") int first,
+			@RequestParam("zeroNumbers") String zeroNumbers,
+			@RequestParam("metaInfo") String metaInfo
 	) {
 		return getOr404(id, "editPack", name, nameLJ, date, metaInfo, first, zeroNumbers);
 	}
 
-	@GET
-	@Path("{id}/addPicture")
-	public Response addPicture(
-			@PathParam("id") String id,
-			@QueryParam("number") String number,
-			@QueryParam("path") String path
+	@ResponseBody
+	@RequestMapping("{id}/addPicture")
+	public String addPicture(
+			@PathVariable("id") String id,
+			@RequestParam("number") String number,
+			@RequestParam("path") String path
 			) {
 		return getOr404(id, "addPicture", number, path);
 	}
 
-	@GET
-	@Path("{id}/uploadForm/{what}")
-	public Response uploadForm(@PathParam("id") String id, @PathParam("what") String what) {
+	@ResponseBody
+	@RequestMapping("{id}/uploadForm/{what}")
+	public String uploadForm(@PathVariable("id") String id, @PathVariable("what") String what) {
 		return getOr404(id, "uploadForm", what);
 	}
 
-	@POST
-	@Path("{id}/upload/{what}")
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public Response uploadFile(
-			@PathParam("id") String id,
-			@PathParam("what") String what,
-			@FormDataParam("file") InputStream fileInputStream,
-			@FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
+	@RequestMapping(value = "{id}/upload/{what}", method = RequestMethod.POST)
+	@ResponseBody
+	public String uploadFile(
+			@PathVariable("id") String id,
+			@PathVariable("what") String what,
+			@RequestParam("file") MultipartFile file) {
 		if (what == null) {
 			what = "file";
 		}
-		return getOr404(id, "upload_" + what, fileInputStream, contentDispositionHeader);
+		return getOr404(id, "upload_" + what, file);
 	}
-	
-	@GET
-	@Path("{id}/editForm")
-	public Response editForm(@PathParam("id") String id, @QueryParam("index") int index) {
+
+	@ResponseBody
+	@RequestMapping("{id}/editForm")
+	public String editForm(@PathVariable("id") String id, @RequestParam("index") int index) {
 		return getOr404(id, "editForm", index);
 	}
 
-	@GET
-	@Path("{id}/editAuthorForm")
-	public Response editAuthorForm(@PathParam("id") String id, @QueryParam("index") int index) throws URISyntaxException {
+	@ResponseBody
+	@RequestMapping("{id}/editAuthorForm")
+	public String editAuthorForm(@PathVariable("id") String id, @RequestParam("index") int index) throws URISyntaxException {
 		return getOr404(id, "editAuthorForm", index);
 	}
 
-	@GET
-	@Path("{id}/remove")
-	public Response removeMethod(@PathParam("id") String id, @QueryParam("index") int index) {
+	@ResponseBody
+	@RequestMapping("{id}/remove")
+	public String removeMethod(@PathVariable("id") String id, @RequestParam("index") int index) {
 		return getOr404(id, "removeMethod", index);
 	}
 
-	@GET
-	@Path("{id}/replace")
-	public Response replace(@PathParam("id") String id, @QueryParam("index") int index) {
+	@ResponseBody
+	@RequestMapping("{id}/replace")
+	public String replace(@PathVariable("id") String id, @RequestParam("index") int index) {
 		return getOr404(id, "replace", index);
 	}
 
-	@GET
-	@Path("{id}/up")
-	public Response upMethod(@PathParam("id") String id, @QueryParam("index") int index) {
+	@ResponseBody
+	@RequestMapping("{id}/up")
+	public String upMethod(@PathVariable("id") String id, @RequestParam("index") int index) {
 		return getOr404(id, "upMethod", index);
 	}
 
-	@GET
-	@Path("{id}/down")
-	public Response downMethod(@PathParam("id") String id, @QueryParam("index") int index) {
+	@ResponseBody
+	@RequestMapping("{id}/down")
+	public String downMethod(@PathVariable("id") String id, @RequestParam("index") int index) {
 		return getOr404(id, "downMethod", index);
 	}
 
-	@GET
-	@Path("{id}/edit")
-	public Response edit(
-			@PathParam("id") String id,
-			@QueryParam("index") int index,
-			@QueryParam("unaudible") String unaudible,
-			@QueryParam("color") String color,
-			@QueryParam("text") String text,
-			@QueryParam("answer") String answer,
-			@QueryParam("possibleAnswers") String possibleAnswers,
-			@QueryParam("impossibleAnswers") String impossibleAnswers,
-			@QueryParam("comment") String comment,
-			@QueryParam("sources") String sources
+	@ResponseBody
+	@RequestMapping("{id}/edit")
+	public String edit(
+			@PathVariable("id") String id,
+			@RequestParam("index") int index,
+			@RequestParam("unaudible") String unaudible,
+			@RequestParam("color") String color,
+			@RequestParam("text") String text,
+			@RequestParam("answer") String answer,
+			@RequestParam("possibleAnswers") String possibleAnswers,
+			@RequestParam("impossibleAnswers") String impossibleAnswers,
+			@RequestParam("comment") String comment,
+			@RequestParam("sources") String sources
 	) {
 		return getOr404(id, "edit", index, unaudible, color, text, answer, possibleAnswers, impossibleAnswers, comment, sources);
 	}
-	
-	@GET
-	@Path("{id}/editAuthor")
-	public Response editAuthor(
-			@PathParam("id") String id,
-			@QueryParam("index") int index,
-			@QueryParam("keys") String author
+
+	@ResponseBody
+	@RequestMapping("{id}/editAuthor")
+	public String editAuthor(
+			@PathVariable("id") String id,
+			@RequestParam("index") int index,
+			@RequestParam("keys") String author
 	) {
 		return getOr404(id, "editAuthor", index, author);
 	}
 
-	@GET
-	@Path("{id}/removeAuthor")
-	public Response removeAuthor(
-			@PathParam("id") String id,
-			@QueryParam("index") int index,
-			@QueryParam("keys") String author
+	@ResponseBody
+	@RequestMapping("{id}/removeAuthor")
+	public String removeAuthor(
+			@PathVariable("id") String id,
+			@RequestParam("index") int index,
+			@RequestParam("keys") String author
 	) {
 		return getOr404(id, "removeAuthor", index, author);
 	}
 
-	@GET
-	@Path("{id}/addEditor")
-	public Response addEditor(
-			@PathParam("id") String id,
-			@QueryParam("keys") String author
+	@ResponseBody
+	@RequestMapping("{id}/addEditor")
+	public String addEditor(
+			@PathVariable("id") String id,
+			@RequestParam("keys") String author
 	) {
 		return getOr404(id, "addEditor", author);
 	}
 
-	@GET
-	@Path("{id}/addTester")
-	public Response addTester(
-			@PathParam("id") String id,
-			@QueryParam("keys") String testerName
+	@ResponseBody
+	@RequestMapping("{id}/addTester")
+	public String addTester(
+			@PathVariable("id") String id,
+			@RequestParam("keys") String testerName
 	) {
 		return getOr404(id, "addTester", testerName);
 	}
 
-	@GET
-	@Path("{id}/removeEditor")
-	public Response removeEditor(
-			@PathParam("id") String id,
-			@QueryParam("keys") String author
+	@ResponseBody
+	@RequestMapping("{id}/removeEditor")
+	public String removeEditor(
+			@PathVariable("id") String id,
+			@RequestParam("keys") String author
 	) {
 		return getOr404(id, "removeEditor", author);
 	}
 
-	@GET
-	@Path("{id}/removeTester")
-	public Response removeTester(
-			@PathParam("id") String id,
-			@QueryParam("keys") String testerName
+	@ResponseBody
+	@RequestMapping("{id}/removeTester")
+	public String removeTester(
+			@PathVariable("id") String id,
+			@RequestParam("keys") String testerName
 	) {
 		return getOr404(id, "removeTester", testerName);
 	}
 
-	@GET
-	@Path("{id}/nextColor")
-	public Response nextColor(
-			@PathParam("id") String id,
-			@QueryParam("index") int index,
-			@QueryParam("color") String colorHex
+	@ResponseBody
+	@RequestMapping("{id}/nextColor")
+	public String nextColor(
+			@PathVariable("id") String id,
+			@RequestParam("index") int index,
+			@RequestParam("color") String colorHex
 	) {
 		return getOr404(id, "nextColor", index, colorHex);
 	}
-
-	@GET
-	@Path("{id}/text")
-	public Response text(@PathParam("id") String id) throws IOException {
+	
+	@ResponseBody
+	@RequestMapping("{id}/text")
+	public String text(@PathVariable("id") String id) throws IOException {
 		return getOr404(id, "text");
 	}
 
-	@GET
-	@Path("{id}/compose")
-	public Response compose(@PathParam("id") String id, 
-							@QueryParam("outFormat") String outFormat, 
-							@QueryParam("debug") boolean debug) throws IOException {
+	@ResponseBody
+	@RequestMapping("{id}/compose")
+	public String compose(@PathVariable("id") String id,
+							@RequestParam("outFormat") String outFormat,
+							@RequestParam("debug") boolean debug) throws IOException {
 		return getOr404(id, "compose", outFormat, debug);
 	}
 
-	@GET
-	@Path("{id}/download/docx")
-	@Produces("application/msword")
-	public Response downloadDocFile(@PathParam("id") String id, @QueryParam("path") String path) {
-		File file = new File(path);
-		Response.ResponseBuilder responseBuilder = Response.ok(file);
-		responseBuilder.header("Content-Disposition", "attachment; filename=\""+ id + ".docx\"");
-		return responseBuilder.build();
+	@ResponseBody
+	@RequestMapping(value = "{id}/download/docx", method = RequestMethod.GET, produces = "application/msword")
+	public FileSystemResource downloadDocFile(@PathVariable("id") String id, @RequestParam("path") String path) {
+		return new FileSystemResource(path);
 	}
 
 	public static void main(String[] args) throws IOException, URISyntaxException {
@@ -322,7 +315,7 @@ public class PackController extends FolderKeaper {
 		packController.refresh();
 		Pack pack = packController.packs.get("rudn_cup");
 		pack.editPack("Кубок РУДН", "Кубок РУДН", "20 октября 2015", "", 1, "0\n00\n000");
-		for (String s : ((String) pack.info().getEntity()).split("<br>")) {
+		for (String s : pack.info().split("<br>")) {
 			System.out.println(s + "<br>");
 		}
 	}
