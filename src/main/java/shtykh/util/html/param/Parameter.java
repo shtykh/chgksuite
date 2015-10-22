@@ -22,6 +22,6 @@ public class Parameter<T> {
 	}
 
 	public String getValueString() {
-		return value== null ? "":value.toString();
+		return value == null ? "" : value.toString();
 	}
 }
