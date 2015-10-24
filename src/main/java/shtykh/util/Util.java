@@ -59,31 +59,6 @@ public class Util {
 		}
 	}
 
-	public static String readProperty(String propFileName, String propertyName) throws FileNotFoundException {
-		Properties prop = new Properties();
-		InputStream inputStream = null;
-		try {
-			inputStream = Util.class.getClassLoader().getResourceAsStream(propFileName);
-
-			if (inputStream != null) {
-				prop.load(inputStream);
-			} else {
-				throw new FileNotFoundException("property file '" + propFileName + "' not found in the classpath");
-			}
-			return prop.getProperty(propertyName);
-		} catch (Exception ex) {
-			throw new FileNotFoundException("property file '" + propFileName + "' not found in the classpath");
-		} finally {
-			if (inputStream != null) {
-				try {
-					inputStream.close();
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}
-		}
-	}
-
 	public static File copyFileToDir(String sourcePath, File destFolder) throws IOException {
 		File source = new File(sourcePath);
 		File dest = new File(destFolder.getAbsolutePath() + "/" + source.getName());

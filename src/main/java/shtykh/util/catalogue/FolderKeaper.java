@@ -1,18 +1,18 @@
 package shtykh.util.catalogue;
 
+import shtykh.util.args.PropertyReader;
+
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by shtykh on 08/10/15.
  */
-public abstract class FolderKeaper {
+public abstract class FolderKeaper implements PropertyReader {
 	protected File folder;
-	public FolderKeaper(String folderName) {
-		initFolder(folderName);
+	private Properties properties;
+
+	public FolderKeaper() {
 	}
 
 	private void initFolder(String filename) {
@@ -27,6 +27,27 @@ public abstract class FolderKeaper {
 			throw new RuntimeException(e);
 		}
 	}
+
+	@Override
+	public void setProperties(Properties properties) {
+		this.properties = properties;
+	}
+
+	@Override
+	public Properties getProperties() {
+		return properties;
+	}
+
+	@Override
+	public void afterRun() {
+		initFolder(folderName());
+	}
+
+	protected String folderName() {
+		return getProperty(folderNameKey());
+	}
+
+	protected abstract String folderNameKey();
 
 	public void refresh() {
 		clearCash();

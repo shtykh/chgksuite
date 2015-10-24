@@ -37,6 +37,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Properties;
 
 import static java.lang.Boolean.parseBoolean;
 import static shtykh.util.Util.*;
@@ -63,12 +64,20 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	private ActionBuilder removeEditorAction;
 	private ActionBuilder removeTesterAction;
 
-	public Pack(String id, HtmlHelper htmlHelper, AuthorsCatalogue authors) throws FileNotFoundException {
-		super(Question.class, Util.readProperty("quedit.properties", "packs") + "/" + id);
+	public Pack(String id, HtmlHelper htmlHelper, AuthorsCatalogue authors, Properties properties) throws FileNotFoundException {
+		super(Question.class);
 		this.id = id;
 		this.htmlHelper = htmlHelper;
 		this.authors = authors;
+		setProperties(properties);
+		afterRun();
 		initActions();
+		initInfo();
+	}
+
+	@Override
+	protected String folderName() {
+		return getProperty("packs") + "/" + id;
 	}
 
 	public String home() {
@@ -86,8 +95,8 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			Parameter<String> parameter = new Parameter<>("index", String.valueOf(size()));
 			uriNew = uri("editForm", parameter);
 			uriText = uri("text");
-			String outFormat = readProperty("quedit.properties", "outFormat");
-			Boolean	debug = parseBoolean(readProperty("quedit.properties", "debug"));
+			String outFormat = getProperty("outFormat");
+			Boolean	debug = parseBoolean(getProperty("debug"));
 			uriBuild = uri("compose",
 					new Parameter<>("outFormat", outFormat),
 					new Parameter<>("debug", debug.toString()));
@@ -193,6 +202,11 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	@Override
+	protected String folderNameKey() {
+		return "packs";
+	}
+
+	@Override
 	public void refresh() {
 		super.refresh();
 		this.info = Jsonable.fromJson(Util.read(infoPath()), PackInfo.class);
@@ -281,11 +295,11 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			question.newIndex(index);
 		}
 		question.setNumber(numerator().getNumber(question.index()));
-		String body = questionHtml(question) + editQuestionAction.buildForm(question);
+		String body = questionHtml(question) + href(uri("editAuthorForm", new Parameter<>("index", index)), "Редактировать авторов") + editQuestionAction.buildForm(question);
 		return htmlPage("Отредактируйте вопрос", body);
 	}
 
-	public String editAuthorForm( int index) throws URISyntaxException {
+	public String editAuthorForm(int index) throws URISyntaxException {
 		Question question = get(index);
 		if (question == null) {
 			question = Question.mock();
@@ -293,6 +307,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		} else {
 			question.newIndex(index);
 		}
+		authors.refresh();
 		question.setNumber(numerator().getNumber(question.index()));
 		question.setAuthors(authors);
 		String body = questionHtml(question) + "<br>"
@@ -420,7 +435,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		String name4sFile = timestampFolder.getAbsoluteFile() + "/4s.4s";
 		write(new File(name4sFile), text4s);
 		logs.debug("4s was written to " + name4sFile);
-		//File template = copyFileToDir(readProperty("quedit.properties", "templatedocx"), timestampFolder);
+		//File template = copyFileToDir(propertyReader.get(("quedit.properties", "templatedocx"), timestampFolder);
 		//logs.debug(template + " was created");
 		String[] cmd = chgkComposeCmd("compose", name4sFile, outFormat, "--nospoilers");
 		if (call(logs, cmd) == 0) {
@@ -491,7 +506,6 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	@Override
 	protected void initFields() {
 		super.initFields();
-		initInfo();
 	}
 
 	private void initInfo() {
@@ -582,16 +596,10 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 	}
 
-	public static void main(String[] args) throws IOException {
-		Pack pack = new Pack("pack0", new HtmlHelper(), new AuthorsCatalogue());
-		//System.out.println(pack.home().getEntity());
-		System.out.println(pack.compose("docx", true));
-	}
-
-	private static String[] chgkComposeCmd(String... parameters) throws FileNotFoundException {
+	private String[] chgkComposeCmd(String... parameters) throws FileNotFoundException {
 		String[] cmd = new String[parameters.length + 2];
-		cmd[0] = readProperty("quedit.properties", "python");
-		cmd[1] = readProperty("quedit.properties", "chgksuite");
+		cmd[0] = getProperty("python");
+		cmd[1] = getProperty("chgksuite");
 		for (int i = 0; i < parameters.length; i++) {
 			cmd[i + 2] = parameters[i];
 		}

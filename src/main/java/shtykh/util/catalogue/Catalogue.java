@@ -20,11 +20,11 @@ public abstract class Catalogue<K,T extends Jsonable> extends FolderKeaper imple
 	protected FormParameterMaterial<CSV> keys = new FormParameterMaterial<>(new CSV(""), CSV.class);
 	
 
-	public Catalogue(Class<T> clazz, String fileName) {
-		super(fileName);
+	public Catalogue(Class<T> clazz) {
+		super();
 		this.clazz = clazz;
 		initFields();
-		refresh();
+//		refresh();
 	}
 
 	protected abstract void initFields();

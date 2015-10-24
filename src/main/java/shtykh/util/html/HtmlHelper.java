@@ -74,7 +74,7 @@ public class HtmlHelper {
 
 	public URI getHome() {
 		try {
-			return uriBuilder("Error").build();
+			return uriBuilder("").build();
 		} catch (URISyntaxException e) {
 			throw new RuntimeException();
 		}

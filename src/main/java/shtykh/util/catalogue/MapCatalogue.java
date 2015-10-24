@@ -13,8 +13,8 @@ import java.util.TreeMap;
 public abstract class MapCatalogue<T extends Jsonable> extends Catalogue<String, T> {
 	private Map<String, T> map;
 
-	public MapCatalogue(Class<T> clazz, String propertyName) {
-		super(clazz, propertyName);
+	public MapCatalogue(Class<T> clazz) {
+		super(clazz);
 	}
 
 	@Override

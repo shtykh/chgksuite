@@ -16,16 +16,16 @@ public class MainApplication {
 	public static void main(String[] args) throws Exception {
 		try {
 			Object[] classes = new Object[]{
-					PackController.class,
 					HtmlHelper.class,
 					AuthorsCatalogue.class,
+					PackController.class,
 					MainApplication.class
 			};
 			SpringApplication app = new SpringApplicationBuilder()
 					.sources(classes)
 					.build();
 			app.run(args);
-			log.info("Application launched successfully");
+			log.info("Application launched successfully, check it out on your localhost");
 		} catch (Exception e) {
 			log.error(e);
 			throw e;

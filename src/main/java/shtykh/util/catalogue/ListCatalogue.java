@@ -19,8 +19,8 @@ import java.util.List;
 public abstract class ListCatalogue<T extends Jsonable & Indexed> extends Catalogue<Integer, T> {
 	private List<T> list;
 
-	public ListCatalogue(Class<T> clazz, String propertyName) {
-		super(clazz, propertyName);
+	public ListCatalogue(Class<T> clazz) {
+		super(clazz);
 	}
 
 	protected void refreshKeys() {

@@ -1,5 +1,7 @@
 package shtykh.rest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Component;
@@ -7,7 +9,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import shtykh.quedit.pack.Pack;
-import shtykh.util.Util;
 import shtykh.util.catalogue.FolderKeaper;
 import shtykh.util.html.HtmlHelper;
 import shtykh.util.html.TableBuilder;
@@ -33,15 +34,29 @@ import static shtykh.util.html.HtmlHelper.htmlPage;
 @Component
 @Controller
 public class PackController extends FolderKeaper {
+	private static final Logger log = LoggerFactory.getLogger(PackController.class);
 	private Map<String, Pack> packs = new TreeMap<>();
 
-	@Autowired
 	private HtmlHelper htmlHelper;
+	@Autowired
+	public void setHtmlHelper(HtmlHelper htmlHelper) {
+		this.htmlHelper = htmlHelper;
+		try {
+			log.info("Check me out at " + htmlHelper.uriBuilder("packs").build());
+		} catch (URISyntaxException ignored) {
+		}
+	}
+	
 	@Autowired
 	private AuthorsCatalogue authors;
 
 	public PackController() throws FileNotFoundException {
-		super(Util.readProperty("quedit.properties", "packs"));
+		super();
+	}
+
+	@Override
+	protected String folderNameKey() {
+		return "packs";
 	}
 
 	@Override
@@ -106,7 +121,7 @@ public class PackController extends FolderKeaper {
 		}
 		Pack pack = packs.get(id);
 		if (pack == null) {
-			String namePattern = Util.readProperty("quedit.properties", "namePattern");
+			String namePattern = getProperty("namePattern");
 			if (!id.matches(namePattern)) {
 				return htmlPage("Придумайте id попроще!", namePattern);
 			}
@@ -122,7 +137,7 @@ public class PackController extends FolderKeaper {
 	}
 
 	private Pack addPack(String id) throws FileNotFoundException {
-		Pack pack = new Pack(id, htmlHelper, authors);
+		Pack pack = new Pack(id, htmlHelper, authors, getProperties());
 		packs.put(id, pack);
 		return pack;
 	}

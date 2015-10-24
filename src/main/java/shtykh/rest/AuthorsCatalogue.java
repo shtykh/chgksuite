@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import shtykh.quedit.author.SinglePerson;
-import shtykh.util.Util;
 import shtykh.util.catalogue.MapCatalogue;
 import shtykh.util.html.HtmlHelper;
 import shtykh.util.html.TableBuilder;
@@ -31,10 +30,14 @@ public class AuthorsCatalogue extends MapCatalogue<SinglePerson> implements UriG
 
 	@Autowired
 	private HtmlHelper htmlHelper;
-	
+
 	public AuthorsCatalogue() throws FileNotFoundException {
-		super(SinglePerson.class, Util.readProperty("quedit.properties", "authors"));
-		refresh();
+		super(SinglePerson.class);
+	}
+
+	@Override
+	protected String folderNameKey() {
+		return "authors";
 	}
 
 	@ResponseBody
