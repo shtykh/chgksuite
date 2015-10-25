@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,7 +30,6 @@ import static shtykh.util.html.HtmlHelper.htmlPage;
  * Created by shtykh on 01/10/15.
  */
 
-@Component
 @Controller
 public class PackController extends FolderKeaper {
 	private static final Logger log = LoggerFactory.getLogger(PackController.class);
@@ -42,7 +40,7 @@ public class PackController extends FolderKeaper {
 	public void setHtmlHelper(HtmlHelper htmlHelper) {
 		this.htmlHelper = htmlHelper;
 		try {
-			log.info("Check me out at " + htmlHelper.uriBuilder("packs").build());
+			log.info("Check me out at " + htmlHelper.uriBuilder("/packs").build());
 		} catch (URISyntaxException ignored) {
 		}
 	}
@@ -323,15 +321,15 @@ public class PackController extends FolderKeaper {
 		return new FileSystemResource(path);
 	}
 
-	public static void main(String[] args) throws IOException, URISyntaxException {
-		PackController packController = new PackController();
-		packController.htmlHelper = new HtmlHelper();
-		packController.authors = new AuthorsCatalogue();
-		packController.refresh();
-		Pack pack = packController.packs.get("rudn_cup");
-		pack.editPack("Кубок РУДН", "Кубок РУДН", "20 октября 2015", "", 1, "0\n00\n000");
-		for (String s : pack.info().split("<br>")) {
-			System.out.println(s + "<br>");
-		}
-	}
+//	public static void main(String[] args) throws IOException, URISyntaxException {
+//		PackController packController = new PackController();
+//		packController.htmlHelper = new HtmlHelper();
+//		packController.authors = new AuthorsCatalogue();
+//		packController.refresh();
+//		Pack pack = packController.packs.get("rudn_cup");
+//		pack.editPack("Кубок РУДН", "Кубок РУДН", "20 октября 2015", "", 1, "0\n00\n000");
+//		for (String s : pack.info().split("<br>")) {
+//			System.out.println(s + "<br>");
+//		}
+//	}
 }

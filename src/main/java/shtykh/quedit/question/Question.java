@@ -118,14 +118,14 @@ public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Inde
 			}
 	}
 
-	public static void main(String[] args) {
-		Question q = mock();
-		System.out.println(q);
-		String json = q.toJson();
-		System.out.println(json);
-		q = Jsonable.fromJson(json, Question.class);
-		System.out.println(q);
-	}
+//	public static void main(String[] args) {
+//		Question q = mock();
+//		System.out.println(q);
+//		String json = q.toJson();
+//		System.out.println(json);
+//		q = Jsonable.fromJson(json, Question.class);
+//		System.out.println(q);
+//	}
 
 	public static Question mock() {
 		return new Question();

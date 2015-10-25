@@ -56,13 +56,13 @@ public class SinglePerson extends Person implements FormMaterial, Jsonable {
 		return firstName.get() + ' ' + lastName.get() + " (" + city.get() + ')';
 	}
 
-	public static void main(String[] args) {
-		SinglePerson p = mock();
-		String string = p.toJson();
-		System.out.println(string);
-		p = Jsonable.fromJson(string, SinglePerson.class);
-		System.out.println(p);
-	}
+//	public static void main(String[] args) {
+//		SinglePerson p = mock();
+//		String string = p.toJson();
+//		System.out.println(string);
+//		p = Jsonable.fromJson(string, SinglePerson.class);
+//		System.out.println(p);
+//	}
 	
 	public int compareTo(SinglePerson o) {
 		int lastNameComp = getLastName().compareTo(o.getLastName());

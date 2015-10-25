@@ -105,13 +105,13 @@ public class AuthorsCatalogue extends MapCatalogue<SinglePerson> implements UriG
 			throw new RuntimeException(e);
 		}
 	}
-
-	public static void main(String[] args) throws FileNotFoundException {
-		AuthorsCatalogue ac = new AuthorsCatalogue();
-		ac.htmlHelper = new HtmlHelper();
-		System.out.println(ac.list());
-		System.out.println("ok");
-	}
+//
+//	public static void main(String[] args) throws FileNotFoundException {
+//		AuthorsCatalogue ac = new AuthorsCatalogue();
+//		ac.htmlHelper = new HtmlHelper();
+//		System.out.println(ac.list());
+//		System.out.println("ok");
+//	}
 
 	@Override
 	protected String getFileName(SinglePerson p) {

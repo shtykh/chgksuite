@@ -111,10 +111,10 @@ public class Parser4s {
 		return info;
 	}
 
-	public static void main(String[] args) {
-		Parser4s p = parseMock();
-		System.out.println("ok");
-	}
+//	public static void main(String[] args) {
+//		Parser4s p = parseMock();
+//		System.out.println("ok");
+//	}
 
 	public static Parser4s parseMock() {
 		String path = "/Users/shtykh/bot/target/4s.4s";
