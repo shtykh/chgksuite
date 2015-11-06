@@ -12,6 +12,7 @@ import shtykh.util.catalogue.FolderKeaper;
 import shtykh.util.html.HtmlHelper;
 import shtykh.util.html.TableBuilder;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -317,7 +318,8 @@ public class PackController extends FolderKeaper {
 
 	@ResponseBody
 	@RequestMapping(value = "{id}/download/docx", method = RequestMethod.GET, produces = "application/msword")
-	public FileSystemResource downloadDocFile(@PathVariable("id") String id, @RequestParam("path") String path) {
+	public FileSystemResource downloadDocFile(@PathVariable("id") String id, @RequestParam("path") String path, HttpServletResponse response) {
+		response.setHeader("Content-Disposition", "attachment; filename=\"" + id + ".docx\"");
 		return new FileSystemResource(path);
 	}
 
