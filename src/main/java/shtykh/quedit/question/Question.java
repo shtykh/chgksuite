@@ -10,6 +10,7 @@ import shtykh.quedit.author.Person;
 import shtykh.rest.AuthorsCatalogue;
 import shtykh.util.Jsonable;
 import shtykh.util.catalogue.Indexed;
+import shtykh.util.html.TableRowMaterial;
 import shtykh.util.html.form.material.FormMaterial;
 import shtykh.util.html.form.material.FormParameterMaterial;
 
@@ -20,7 +21,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 /**
  * Created by shtykh on 01/10/15.
  */
-public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Indexed {
+public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Indexed, TableRowMaterial {
 	private AuthorsCatalogue authors;
 	private FormParameterMaterial<String> unaudible;
 	private FormParameterMaterial<Integer> index;

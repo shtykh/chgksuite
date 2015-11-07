@@ -1,5 +1,6 @@
 package shtykh.quedit.author;
 
+import org.apache.commons.lang.StringUtils;
 import shtykh.util.Jsonable;
 import shtykh.util.html.form.material.FormMaterial;
 import shtykh.util.html.form.material.FormParameterMaterial;
@@ -53,7 +54,7 @@ public class SinglePerson extends Person implements FormMaterial, Jsonable {
 
 	@Override
 	public String toString() {
-		return firstName.get() + ' ' + lastName.get() + " (" + city.get() + ')';
+		return firstName.get() + ' ' + lastName.get() + (StringUtils.isNotEmpty(city.get()) ? " (" + city.get() + ')' : "");
 	}
 
 //	public static void main(String[] args) {

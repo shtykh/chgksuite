@@ -19,10 +19,7 @@ import shtykh.util.StringSerializer;
 import shtykh.util.Util;
 import shtykh.util.catalogue.Catalogue;
 import shtykh.util.catalogue.ListCatalogue;
-import shtykh.util.html.ColoredTable;
-import shtykh.util.html.HtmlHelper;
-import shtykh.util.html.TableBuilder;
-import shtykh.util.html.UriGenerator;
+import shtykh.util.html.*;
 import shtykh.util.html.form.build.ActionBuilder;
 import shtykh.util.html.form.build.FormBuilder;
 import shtykh.util.html.form.material.FormMaterial;
@@ -82,7 +79,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 
 	public String home() {
 		refresh();
-		ColoredTable questionsTable;
+		ColoredTableBuilder questionsTable;
 		URI uriHome;
 		URI uriNew;
 		URI uriText;
@@ -272,7 +269,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 							new FormParameterSignature("path", hidden), file.getAbsolutePath(), String.class))
 					.addMember(new FormParameter<>(
 							new FormParameterSignature("number", "Добавить раздаточный материал к вопросу номер", text), "", String.class));
-			return htmlHelper.listResponce("Картинка загружена", formBuilder.build(HTTPMethods.GET));
+			return htmlHelper.listResponce("Картинка загружена", formBuilder.build(HTTPMethods.GET), getQuestionTable().buildHtml());
 		} catch (Exception e) {
 			return error(e);
 		}
@@ -470,36 +467,94 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return htmlHelper;
 	}
 
-	private ColoredTable getQuestionTable() throws URISyntaxException {
-		ColoredTable table = new ColoredTable("Номер", "Ответ", "Редактировать", "Авторы", "В запас", "Вверх", "Вниз");
+	private ColumnTableBuilder<Question> getQuestionTable() throws URISyntaxException {
+		ColumnTableBuilder<Question> table = initQuestionTable();
 		for (int i = 0; i < size(); i++) {
-			String index = String.valueOf(i);
-			Parameter<String> parameter = new Parameter<>("index", index);
-			URI home = uri("");
-			URI uriEdit = uri("editForm", parameter);
-			String questionColor = get(i).getColor();
-			URI uriColor = uri("nextColor", parameter, new Parameter<>("color", questionColor));
-			URI uriEditAuthor = uri("editAuthorForm", parameter);
-			URI uriUp = i == 0 ? home : uri("up", parameter);
-			URI uriDown = i == size() - 1 ? home : uri("down", parameter);
-			URI uriRemove = uri("remove", parameter);
-			URI uriReplace = uri("replace", parameter);
-			Person author = get(i).getAuthor();
-			String authorString = "Добавить автора";
-			if (author != null && StringUtils.isNotBlank(author.toString())) {
-				authorString = author.toString();
-			}
-			table.addRow(href(uriColor, numerator().getNumber(i)),
-					get(i).getAnswer()
-					,href(uriEdit, "Редактировать")
-					,href(uriEditAuthor, authorString)
-					,href(uriReplace, "В запас")
-					,href(uriRemove, "Удалить")
-					,href(uriUp, "<--")
-					,href(uriDown, "-->")
-					);
-			table.addColor(i + 1, 0, questionColor);
+			table.addRow(get(i));
 		}
+		return table;
+	}
+
+	private ColumnTableBuilder<Question> initQuestionTable() {
+		ColumnTableBuilder<Question> table = new ColumnTableBuilder<>();
+			table.addColumn("Номер", new ColumnBuilder<Question>() {
+				@Override
+				public String getCell(Question question) {
+					int i = question.index();
+					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
+					String questionColor = question.getColor();
+					URI uriColor = uri("nextColor", parameter, new Parameter<>("color", questionColor));
+					table.addColor(i + 1, 0, questionColor);
+					return href(uriColor, numerator().getNumber(i));
+				}
+			});
+			table.addColumn("Ответ", new ColumnBuilder<Question>() {
+				@Override
+				public String getCell(Question question) {
+					return question.getAnswer();
+				}
+			});
+			table.addColumn("Редактировать", new ColumnBuilder<Question>() {
+				@Override
+				public String getCell(Question question) {
+					int i = question.index();
+					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
+					URI uriEdit = uri("editForm", parameter);
+					return href(uriEdit, "Редактировать");
+				}
+			});
+			table.addColumn("Авторы", new ColumnBuilder<Question>() {
+				@Override
+				public String getCell(Question question) {
+					int i = question.index();
+					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
+					URI uriEditAuthor = uri("editAuthorForm", parameter);
+					Person author = question.getAuthor();
+					String authorString = "Добавить автора";
+					if (author != null && StringUtils.isNotBlank(author.toString())) {
+						authorString = author.toString();
+					}
+					return href(uriEditAuthor, authorString);
+				}
+			});
+			table.addColumn("В запас", new ColumnBuilder<Question>() {
+				@Override
+				public String getCell(Question question) {
+					int i = question.index();
+					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
+					URI uriReplace = uri("replace", parameter);
+					return href(uriReplace, "В запас");
+				}
+			});
+			table.addColumn("Удалить", new ColumnBuilder<Question>() {
+				@Override
+				public String getCell(Question question) {
+					int i = question.index();
+					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
+					URI uriRemove = uri("remove", parameter);
+					return href(uriRemove, "Удалить");
+				}
+			});
+			table.addColumn("Вверх", new ColumnBuilder<Question>() {
+				@Override
+				public String getCell(Question question) {
+					int i = question.index();
+					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
+					URI home = uri("");
+					URI uriUp = i == 0 ? home : uri("up", parameter);
+					return href(uriUp, "^^");
+				}
+			});
+			table.addColumn("Вниз", new ColumnBuilder<Question>() {
+				@Override
+				public String getCell(Question question) {
+					int i = question.index();
+					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
+					URI home = uri("");
+					URI uriDown = i == size() - 1 ? home : uri("down", parameter);
+					return href(uriDown, "vv");
+				}
+			});
 		return table;
 	}
 
