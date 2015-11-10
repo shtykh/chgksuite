@@ -144,7 +144,8 @@ public class Util {
 		File file = new File(directory + "/" + fileName);
 		int i = 0;
 		while (file.exists()) {
-			file = new File(directory + "/" + fileName + "(" + i + ")");
+			String[] split = fileName.split("\\.", 2);
+			file = new File(directory + "/" + split[0] + "(" + i + ")" + "." + split[1]);
 		}
 		try(OutputStream outpuStream = new FileOutputStream(file)){
 			outpuStream.write(multipartFile.getBytes());

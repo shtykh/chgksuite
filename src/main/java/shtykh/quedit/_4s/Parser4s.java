@@ -52,7 +52,9 @@ public class Parser4s {
 			}
 		}
 		set4s(currentType, sb.toString(), q);
-		questions.add(q);
+		if (! q.empty()) {
+			questions.add(q);
+		}
 	}
 
 	private void set4s(Type4s type4s, String value, Question q) {

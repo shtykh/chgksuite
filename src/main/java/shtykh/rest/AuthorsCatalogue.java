@@ -42,7 +42,7 @@ public class AuthorsCatalogue extends MapCatalogue<SinglePerson> implements UriG
 
 	@ResponseBody
 	@RequestMapping("list")
-	public String list() {
+	public String list() throws Exception {
 		refresh();
 		String name = "Персонажи";
 		TableBuilder table;
@@ -60,7 +60,7 @@ public class AuthorsCatalogue extends MapCatalogue<SinglePerson> implements UriG
 		return htmlPage(name, href, body);
 	}
 
-	private TableBuilder getPersonTable() throws URISyntaxException {
+	private TableBuilder getPersonTable() throws Exception {
 		TableBuilder table = new TableBuilder("Персонаж", "Редактировать", "Удалить");
 		for (String name : keys()) {
 			URI uriEdit = uri("editform", new Parameter<>("name", name));
@@ -82,14 +82,14 @@ public class AuthorsCatalogue extends MapCatalogue<SinglePerson> implements UriG
 
 	@ResponseBody
 	@RequestMapping("remove")
-	public String removeMethod(@RequestParam("name") String name) {
+	public String removeMethod(@RequestParam("name") String name) throws Exception {
 		super.remove(name);
 		return list();
 	}
 
 	@ResponseBody
 	@RequestMapping("/edit")
-	public String edit(@RequestParam("firstName") String name, @RequestParam("lastName") String lastName, @RequestParam("city") String city) {
+	public String edit(@RequestParam("firstName") String name, @RequestParam("lastName") String lastName, @RequestParam("city") String city) throws Exception {
 		SinglePerson p = new SinglePerson(name, lastName, city);
 		add(p);
 		return list();

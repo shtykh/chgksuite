@@ -1,5 +1,6 @@
 package shtykh.quedit.question;
 
+import org.apache.commons.lang.StringUtils;
 import shtykh.util.CSV;
 import shtykh.quedit._4s.FormParameterMaterial4s;
 import shtykh.quedit._4s.Type4s;
@@ -216,5 +217,9 @@ public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Inde
 	@Override
 	public String to4s() {
 		return toString();
+	}
+
+	public boolean empty() {
+		return StringUtils.isEmpty(text.get()) && StringUtils.isEmpty(answer.get());
 	}
 }

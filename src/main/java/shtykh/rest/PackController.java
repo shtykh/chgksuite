@@ -100,7 +100,7 @@ public class PackController extends FolderKeaper {
 
 	@ResponseBody
 	@RequestMapping("packs")
-	public String all() throws IOException, URISyntaxException {
+	public String all() throws Exception {
 		refresh();
 		TableBuilder table = new TableBuilder();
 		for (String id : packs.keySet()) {
@@ -114,7 +114,7 @@ public class PackController extends FolderKeaper {
 
 	@ResponseBody
 	@RequestMapping("{id}")
-	public String getPack(@PathVariable("id") String id) throws IOException {
+	public String getPack(@PathVariable("id") String id) throws Exception {
 		if (id.equals("new")) {
 			return htmlPage("Новый пакет", "Впишите id пакета в адресную строку вместо \"new\"");
 		}

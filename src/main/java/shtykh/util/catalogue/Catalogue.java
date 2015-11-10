@@ -7,7 +7,6 @@ import shtykh.util.html.form.material.FormMaterial;
 import shtykh.util.html.form.material.FormParameterMaterial;
 
 import java.io.File;
-import java.io.IOException;
 
 import static shtykh.util.Jsonable.fromJson;
 import static shtykh.util.Util.read;
@@ -30,7 +29,7 @@ public abstract class Catalogue<K,T extends Jsonable> extends FolderKeaper imple
 	protected abstract void initFields();
 
 	@Override
-	public void refresh() {
+	public void refresh() throws Exception {
 		super.refresh();
 		refreshKeys();
 	}
@@ -47,7 +46,7 @@ public abstract class Catalogue<K,T extends Jsonable> extends FolderKeaper imple
 		return !file.isDirectory() && ! file.getName().startsWith(".");
 	}
 
-	public String[] keys() {
+	public String[] keys() throws Exception {
 		refresh();
 		return keys.get().asArray();
 	}
@@ -60,12 +59,12 @@ public abstract class Catalogue<K,T extends Jsonable> extends FolderKeaper imple
 
 	protected abstract void clearCash();
 	
-	public void remove(K name) {
+	public void remove(K name) throws Exception {
 		file(name).delete();
 		refresh();
 	}
 
-	public void replace(K name, String folder) throws IOException {
+	public void replace(K name, String folder) throws Exception {
 		File destFolder = new File(this.folder.getAbsolutePath().replace(this.folder.getName(), folder));
 		File fileToReplace = file(name);
 		Util.copyFileToDir(fileToReplace.getAbsolutePath(), destFolder);

@@ -84,4 +84,18 @@ public class SinglePerson extends Person implements FormMaterial, Jsonable {
 			throw new NotImplementedException();
 		}
 	}
+
+	public static SinglePerson fromString(String string) {
+		SinglePerson person = new SinglePerson();
+		String[] split = string.split("\\(");
+		String[] names = split[0].split("\\s+", 2);
+		person.setFirstName(StringUtils.trim(names[0]));
+		person.setLastName(StringUtils.trim(names[1]));
+		if (split.length > 1) {
+			String city = split[1];
+			city = city.substring(0, city.indexOf(")"));
+			person.setCity(StringUtils.trim(city));
+		}
+		return person;
+	}
 }

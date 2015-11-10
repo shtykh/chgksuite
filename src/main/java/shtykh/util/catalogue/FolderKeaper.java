@@ -49,18 +49,14 @@ public abstract class FolderKeaper implements PropertyReader {
 
 	protected abstract String folderNameKey();
 
-	public void refresh() {
+	public void refresh() throws Exception{
 		clearCash();
-		try {
-			List<File> files = Arrays.asList(folder.listFiles());
-			Collections.sort(files, getFilesComparator());
-			for (File file : files) {
-				if (isGood(file)) {
-					refreshFile(file);
-				}
+		List<File> files = Arrays.asList(folder.listFiles());
+		Collections.sort(files, getFilesComparator());
+		for (File file : files) {
+			if (isGood(file)) {
+				refreshFile(file);
 			}
-		} catch (Exception ignored) {
-			ignored.printStackTrace();
 		}
 	}
 

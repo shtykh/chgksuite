@@ -77,7 +77,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return getProperty("packs") + "/" + id;
 	}
 
-	public String home() {
+	public String home() throws Exception {
 		refresh();
 		ColoredTableBuilder questionsTable;
 		URI uriHome;
@@ -119,7 +119,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 
-	public String info() {
+	public String info() throws Exception {
 		refresh();
 		URI uriHome;
 		URI uriAuthors;
@@ -204,7 +204,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	@Override
-	public void refresh() {
+	public void refresh() throws Exception {
 		super.refresh();
 		this.info = Jsonable.fromJson(Util.read(infoPath()), PackInfo.class);
 	}
@@ -220,7 +220,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			 String metaInfo,
 			 int first,
 			 String zeroNumbers
-	) {
+	) throws Exception {
 		setName(name);
 		setNameLJ(nameLJ);
 		setDate(date);
@@ -248,7 +248,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		try{
 			String folderPath = folder.getAbsolutePath();
 			clearFolder();
-			File file = saveFile(multipartFile, folderPath, "4s.4s");
+			File file = saveFile(multipartFile, folderPath, id + ".4s");
 			Parser4s parser4s = new Parser4s(file.getAbsolutePath());
 			this.fromParser(parser4s);
 			file.delete();
@@ -262,14 +262,17 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		new File(folder + "/pics").mkdirs();
 		try {
 			String folderPath = folder + "/pics";
-			File file = saveFile(multipartFile, folderPath, "pic.png");
+			File file = saveFile(multipartFile, folderPath, multipartFile.getName());
 			FormBuilder formBuilder = new FormBuilder(address("addPicture"));
 			formBuilder
 					.addMember(new FormParameter<>(
 							new FormParameterSignature("path", hidden), file.getAbsolutePath(), String.class))
 					.addMember(new FormParameter<>(
 							new FormParameterSignature("number", "Добавить раздаточный материал к вопросу номер", text), "", String.class));
-			return htmlHelper.listResponce("Картинка загружена", formBuilder.build(HTTPMethods.GET), getQuestionTable().buildHtml());
+			return htmlHelper.listResponce(
+					"Картинка загружена", 
+					formBuilder.build(HTTPMethods.GET), 
+					getQuestionTable(QuestionTableBuilder.ColumnName.NUMBER, QuestionTableBuilder.ColumnName.ANSWER).buildHtml());
 		} catch (Exception e) {
 			return error(e);
 		}
@@ -296,7 +299,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return htmlPage("Отредактируйте вопрос", body);
 	}
 
-	public String editAuthorForm(int index) throws URISyntaxException {
+	public String editAuthorForm(int index) throws Exception {
 		Question question = get(index);
 		if (question == null) {
 			question = Question.mock();
@@ -314,7 +317,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return htmlPage("Добавить автора", body);
 	}
 
-	public String removeMethod(int index) {
+	public String removeMethod(int index) throws Exception {
 		super.remove(index);
 		return home();
 	}
@@ -330,17 +333,17 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 	}
 
-	public String replace(int index) throws IOException {
+	public String replace(int index) throws Exception {
 		super.replace(index, "zapas");
 		return home();
 	}
 
-	public String upMethod( int index) {
+	public String upMethod( int index) throws Exception {
 		super.up(index);
 		return home();
 	}
 
-	public String downMethod( int index) {
+	public String downMethod( int index) throws Exception {
 		super.down(index);
 		return home();
 	}
@@ -355,7 +358,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			 String impossibleAnswers,
 			 String comment,
 			 String sources
-	) {
+	) throws Exception {
 		Question question = get(index);
 		if (question == null) {
 			question = new Question();
@@ -397,7 +400,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	public String nextColor(
 			 int index,
 			 String colorHex
-	) {
+	) throws Exception {
 		StringSerializer<Color> serializer = StringSerializer.getForClass(Color.class);
 		Question question = get(index);
 		Color color = Color.decode(colorHex);
@@ -429,7 +432,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		File timestampFolder = new File(folder.getAbsolutePath() + "/" + timestamp);
 		timestampFolder.mkdirs();
 		logs.debug(timestampFolder + " is created");
-		String name4sFile = timestampFolder.getAbsoluteFile() + "/4s.4s";
+		String name4sFile = timestampFolder.getAbsoluteFile() + "/" + id + ".4s";
 		write(new File(name4sFile), text4s);
 		logs.debug("4s was written to " + name4sFile);
 		//File template = copyFileToDir(propertyReader.get(("quedit.properties", "templatedocx"), timestampFolder);
@@ -459,103 +462,26 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return responseBuilder.build();
 	}
 	
+	@Override
 	public String base(){
 		return "/" + id;
 	}
 	
+	@Override
 	public HtmlHelper htmlHelper() {
 		return htmlHelper;
 	}
 
-	private ColumnTableBuilder<Question> getQuestionTable() throws URISyntaxException {
-		ColumnTableBuilder<Question> table = initQuestionTable();
+	private ColumnTableBuilder<Question> getQuestionTable(QuestionTableBuilder.ColumnName... columnNames) throws URISyntaxException {
+		ColumnTableBuilder<Question> table = initQuestionTable(columnNames);
 		for (int i = 0; i < size(); i++) {
 			table.addRow(get(i));
 		}
 		return table;
 	}
 
-	private ColumnTableBuilder<Question> initQuestionTable() {
-		ColumnTableBuilder<Question> table = new ColumnTableBuilder<>();
-			table.addColumn("Номер", new ColumnBuilder<Question>() {
-				@Override
-				public String getCell(Question question) {
-					int i = question.index();
-					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-					String questionColor = question.getColor();
-					URI uriColor = uri("nextColor", parameter, new Parameter<>("color", questionColor));
-					table.addColor(i + 1, 0, questionColor);
-					return href(uriColor, numerator().getNumber(i));
-				}
-			});
-			table.addColumn("Ответ", new ColumnBuilder<Question>() {
-				@Override
-				public String getCell(Question question) {
-					return question.getAnswer();
-				}
-			});
-			table.addColumn("Редактировать", new ColumnBuilder<Question>() {
-				@Override
-				public String getCell(Question question) {
-					int i = question.index();
-					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-					URI uriEdit = uri("editForm", parameter);
-					return href(uriEdit, "Редактировать");
-				}
-			});
-			table.addColumn("Авторы", new ColumnBuilder<Question>() {
-				@Override
-				public String getCell(Question question) {
-					int i = question.index();
-					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-					URI uriEditAuthor = uri("editAuthorForm", parameter);
-					Person author = question.getAuthor();
-					String authorString = "Добавить автора";
-					if (author != null && StringUtils.isNotBlank(author.toString())) {
-						authorString = author.toString();
-					}
-					return href(uriEditAuthor, authorString);
-				}
-			});
-			table.addColumn("В запас", new ColumnBuilder<Question>() {
-				@Override
-				public String getCell(Question question) {
-					int i = question.index();
-					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-					URI uriReplace = uri("replace", parameter);
-					return href(uriReplace, "В запас");
-				}
-			});
-			table.addColumn("Удалить", new ColumnBuilder<Question>() {
-				@Override
-				public String getCell(Question question) {
-					int i = question.index();
-					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-					URI uriRemove = uri("remove", parameter);
-					return href(uriRemove, "Удалить");
-				}
-			});
-			table.addColumn("Вверх", new ColumnBuilder<Question>() {
-				@Override
-				public String getCell(Question question) {
-					int i = question.index();
-					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-					URI home = uri("");
-					URI uriUp = i == 0 ? home : uri("up", parameter);
-					return href(uriUp, "^^");
-				}
-			});
-			table.addColumn("Вниз", new ColumnBuilder<Question>() {
-				@Override
-				public String getCell(Question question) {
-					int i = question.index();
-					Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-					URI home = uri("");
-					URI uriDown = i == size() - 1 ? home : uri("down", parameter);
-					return href(uriDown, "vv");
-				}
-			});
-		return table;
+	private QuestionTableBuilder initQuestionTable(QuestionTableBuilder.ColumnName... columnNames) {
+		return new QuestionTableBuilder(this, columnNames);
 	}
 
 	@Override
@@ -586,7 +512,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	@Override
-	protected QuestionNumerator numerator() {
+	public QuestionNumerator numerator() {
 		return info.getNumerator();
 	}
 
@@ -602,7 +528,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		item.setNumber(numerator().getNumber(number));
 	}
 
-	public String addEditor(String name) {
+	public String addEditor(String name) throws Exception {
 		if (authors == null) {
 			throw new RuntimeException("Authors were null");
 		}
@@ -611,7 +537,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return info();
 	}
 
-	public String removeEditor(String name) {
+	public String removeEditor(String name) throws Exception {
 		if (authors == null) {
 			throw new RuntimeException("Authors were null");
 		}
@@ -620,7 +546,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return info();
 	}
 
-	public String addTester(String name) {
+	public String addTester(String name) throws Exception {
 		if (authors == null) {
 			throw new RuntimeException("Authors were null");
 		}
@@ -629,7 +555,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return info();
 	}
 	
-	public String removeTester(String name) {
+	public String removeTester(String name) throws Exception {
 		if (authors == null) {
 			throw new RuntimeException("Authors were null");
 		}
