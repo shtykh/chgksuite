@@ -60,6 +60,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	private ActionBuilder addTesterAction;
 	private ActionBuilder removeEditorAction;
 	private ActionBuilder removeTesterAction;
+	private Boolean debug = false;
 
 	public Pack(String id, HtmlHelper htmlHelper, AuthorsCatalogue authors, Properties properties) throws FileNotFoundException {
 		super(Question.class);
@@ -93,14 +94,16 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			uriNew = uri("editForm", parameter);
 			uriText = uri("text");
 			String outFormat = getProperty("outFormat");
-			Boolean	debug = parseBoolean(getProperty("debug"));
+			debug = parseBoolean(getProperty("debug"));
 			uriBuild = uri("compose",
 					new Parameter<>("outFormat", outFormat),
 					new Parameter<>("debug", debug.toString()));
 			uriPreambula = uri("info");
 			hrefs = new TableBuilder("Загрузить",
 					href(uriBuilder("uploadForm/4s").build(), "Импорт пакета из 4s"),
-					href(uriBuilder("uploadForm/pic").build(), "Загрузить картинку"));
+					href(uriBuilder("uploadForm/docx").build(), "Импорт пакета из docx"),
+					href(uriBuilder("uploadForm/pic").build(), "Загрузить картинку")
+			);
 		} catch (Exception e) {
 			return error(e);
 		}
@@ -245,8 +248,9 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	public String upload_4s(MultipartFile multipartFile) {
-		try{
-			String folderPath = folder.getAbsolutePath();
+		String folderPath = folder + "/import";
+		try {
+			new File(folderPath).mkdirs();
 			clearFolder();
 			File file = saveFile(multipartFile, folderPath, id + ".4s");
 			Parser4s parser4s = new Parser4s(file.getAbsolutePath());
@@ -258,10 +262,28 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 	}
 
-	public String upload_pic(MultipartFile multipartFile) {
-		new File(folder + "/pics").mkdirs();
+	public String upload_docx(MultipartFile multipartFile) {
+		String folderPath = folder + "/import";
 		try {
-			String folderPath = folder + "/pics";
+			new File(folderPath).mkdirs();
+			clearFolder();
+			File fileDocx = saveFile(multipartFile, folderPath, id + ".docx");
+			StringLogger logs = new StringLogger(log, debug);
+			logs.info("File saved to server location : " + file);
+			String[] cmd = chgkSuiteCmd("parse", fileDocx.getAbsolutePath());
+			call(logs, cmd);
+			//todo fromParser(%something%)
+			logs.info("todo fromParser(%something%)");
+			return htmlPage("Загрузка из " + multipartFile.getOriginalFilename(), logs.toString().replace("\n", "<br>"));
+		} catch (Exception e) {
+			return error(e);
+		}
+	}
+
+	public String upload_pic(MultipartFile multipartFile) {
+		String folderPath = folder + "/pics";
+		try {
+			new File(folderPath).mkdirs();
 			File file = saveFile(multipartFile, folderPath, multipartFile.getName());
 			FormBuilder formBuilder = new FormBuilder(address("addPicture"));
 			formBuilder
@@ -424,7 +446,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return htmlPage(getName(), "", text4s.replace("\n", "<br>"));
 	}
 
-	public String compose( String outFormat,  boolean debug) throws IOException {
+	public String compose(String outFormat, boolean debug) throws IOException {
 		StringLogger logs = new StringLogger(log, debug);
 		String text4s = to4s();
 		logs.debug("text generated in 4s");
@@ -437,7 +459,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		logs.debug("4s was written to " + name4sFile);
 		//File template = copyFileToDir(propertyReader.get(("quedit.properties", "templatedocx"), timestampFolder);
 		//logs.debug(template + " was created");
-		String[] cmd = chgkComposeCmd("compose", name4sFile, outFormat, "--nospoilers");
+		String[] cmd = chgkSuiteCmd("compose", name4sFile, outFormat, "--nospoilers");
 		if (call(logs, cmd) == 0) {
 			logs.info("Файл формата " + outFormat + " успешно создан в папке " + timestampFolder);
 			if (outFormat.equals("docx")) {
@@ -577,7 +599,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 	}
 
-	private String[] chgkComposeCmd(String... parameters) throws FileNotFoundException {
+	private String[] chgkSuiteCmd(String... parameters) throws FileNotFoundException {
 		String[] cmd = new String[parameters.length + 2];
 		cmd[0] = getProperty("python");
 		cmd[1] = getProperty("chgksuite");
