@@ -250,31 +250,38 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	public String upload_4s(MultipartFile multipartFile) {
 		String folderPath = folder + "/import";
 		try {
-			new File(folderPath).mkdirs();
+			File timestampFolder = timestampFolder(new File(folderPath));
 			clearFolder();
-			File file = saveFile(multipartFile, folderPath, id + ".4s");
-			Parser4s parser4s = new Parser4s(file.getAbsolutePath());
-			this.fromParser(parser4s);
-			file.delete();
+			File file = saveFile(multipartFile, timestampFolder.getAbsolutePath(), id + ".docx");
+			fron4sFile(file);
 			return home();
 		} catch (Exception e) {
 			return error(e);
 		}
 	}
 
+	private void fron4sFile(File file) {
+		Parser4s parser4s = new Parser4s(file.getAbsolutePath());
+		this.fromParser(parser4s);
+		file.delete();
+	}
+
 	public String upload_docx(MultipartFile multipartFile) {
 		String folderPath = folder + "/import";
 		try {
-			new File(folderPath).mkdirs();
+			File timestampFolder = timestampFolder(new File(folderPath));
 			clearFolder();
-			File fileDocx = saveFile(multipartFile, folderPath, id + ".docx");
+			File fileDocx = saveFile(multipartFile, timestampFolder.getAbsolutePath(), id + ".docx");
 			StringLogger logs = new StringLogger(log, debug);
 			logs.info("File saved to server location : " + file);
 			String[] cmd = chgkSuiteCmd("parse", fileDocx.getAbsolutePath());
-			call(logs, cmd);
-			//todo fromParser(%something%)
-			logs.info("todo fromParser(%something%)");
-			return htmlPage("Загрузка из " + multipartFile.getOriginalFilename(), logs.toString().replace("\n", "<br>"));
+			if (call(logs, cmd) == 0) {
+				File file4s = new File(timestampFolder.getAbsoluteFile() + "/" + id + ".4s");
+				fron4sFile(file4s);
+				return home();
+			} else {
+				return htmlPage("Загрузка из " + multipartFile.getOriginalFilename(), logs.toString().replace("\n", "<br>"));
+			}
 		} catch (Exception e) {
 			return error(e);
 		}
@@ -283,8 +290,8 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	public String upload_pic(MultipartFile multipartFile) {
 		String folderPath = folder + "/pics";
 		try {
-			new File(folderPath).mkdirs();
-			File file = saveFile(multipartFile, folderPath, multipartFile.getName());
+			File timestampFolder = timestampFolder(new File(folderPath));
+			File file = saveFile(multipartFile, timestampFolder.getAbsolutePath(), multipartFile.getName());
 			FormBuilder formBuilder = new FormBuilder(address("addPicture"));
 			formBuilder
 					.addMember(new FormParameter<>(
@@ -450,9 +457,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		StringLogger logs = new StringLogger(log, debug);
 		String text4s = to4s();
 		logs.debug("text generated in 4s");
-		String timestamp = timestamp("yyyyMMdd_HHmmss");
-		File timestampFolder = new File(folder.getAbsolutePath() + "/" + timestamp);
-		timestampFolder.mkdirs();
+		File timestampFolder = timestampFolder(folder);
 		logs.debug(timestampFolder + " is created");
 		String name4sFile = timestampFolder.getAbsoluteFile() + "/" + id + ".4s";
 		write(new File(name4sFile), text4s);
@@ -475,6 +480,13 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		//template.delete();
 		//logs.debug(template + " was deleted");
 		return htmlPage("Выгрузка", logs.toString().replace("\n", "<br>"));
+	}
+	
+	private static File timestampFolder(File folder) {
+		String timestamp = timestamp("yyyyMMdd_HHmmss");
+		File timestampFolder = new File(folder.getAbsolutePath() + "/" + timestamp);
+		timestampFolder.mkdirs();
+		return timestampFolder;
 	}
 
 	public Response downloadDocFile(String path) {
