@@ -90,6 +90,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		URI uriText;
 		URI uriBuild;
 		URI uriPreambula;
+		URI uriPacks;
 		TableBuilder hrefs;
 		try {
 			questionsTable = getQuestionTable();
@@ -99,6 +100,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			uriText = uri("text");
 			String outFormat = getProperty("outFormat");
 			debug = parseBoolean(getProperty("debug"));
+			uriPacks = packs.uri("");
 			uriBuild = uri("compose",
 					new Parameter<>("outFormat", outFormat),
 					new Parameter<>("debug", debug.toString()));
@@ -117,6 +119,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 				href(uriText, "Полный текст в 4s"),
 				href(uriBuild, "Сгенерировать пакет"));
 		String body = 
+				href(uriPacks, "К списку пакетов") + 
 				hrefs.toString() + "<br>" +
 						href(uriPreambula, "Редактировать преамбулу") +
 						questionsTable.toString() + "<br>" +
@@ -334,7 +337,12 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			}
 			question.setNumber(numerator().getNumber(question.index()));
 			question.setPacks(packs);
-			String body = questionHtml(question)
+			TableBuilder navigation = new TableBuilder()
+					.addRow(href(uri("editForm", new Parameter<>("index", index - 1)), "Назад"),
+							href(uri(""), "К пакету"),
+							href(uri("editForm", new Parameter<>("index", index + 1)), "Вперёд"));
+			String body = navigation
+					+ questionHtml(question)
 					+ href(uri("editAuthorForm", new Parameter<>("index", index)), "Редактировать авторов")
 					+ replaceQuestionAction.buildForm(question)
 					+ editQuestionAction.buildForm(question);

@@ -12,6 +12,7 @@ import shtykh.util.CSV;
 import shtykh.util.catalogue.FolderKeaper;
 import shtykh.util.html.HtmlHelper;
 import shtykh.util.html.TableBuilder;
+import shtykh.util.html.UriGenerator;
 import shtykh.util.html.form.material.FormMaterial;
 import shtykh.util.html.form.material.FormParameterMaterial;
 
@@ -35,7 +36,7 @@ import static shtykh.util.html.HtmlHelper.htmlPage;
  */
 
 @Controller
-public class PackController extends FolderKeaper implements FormMaterial {
+public class PackController extends FolderKeaper implements FormMaterial, UriGenerator {
 	private static final Logger log = LoggerFactory.getLogger(PackController.class);
 	protected FormParameterMaterial<CSV> packNames = new FormParameterMaterial<>(new CSV(""), CSV.class);
 	private Map<String, Pack> packs = new TreeMap<>();
@@ -44,10 +45,7 @@ public class PackController extends FolderKeaper implements FormMaterial {
 	@Autowired
 	public void setHtmlHelper(HtmlHelper htmlHelper) {
 		this.htmlHelper = htmlHelper;
-		try {
-			log.info("Check me out at " + htmlHelper.uriBuilder("/packs").build());
-		} catch (URISyntaxException ignored) {
-		}
+		log.info("Check me out at " + uri(""));
 	}
 	
 	@Autowired
@@ -69,10 +67,7 @@ public class PackController extends FolderKeaper implements FormMaterial {
 
 	@Override
 	public void refreshFile(File file) {
-		try {
-			addPack(file.getName());
-		}
-		catch (FileNotFoundException ignored) {}
+		addPack(file.getName());
 	}
 
 	@Override
@@ -145,13 +140,18 @@ public class PackController extends FolderKeaper implements FormMaterial {
 		return getOr404(id, "info");
 	}
 
-	private Pack addPack(String id) throws FileNotFoundException {
-		Pack pack = packs.get(id);
-		if (pack == null) {
-			pack = new Pack(id, htmlHelper, authors, this, getProperties());
-			packs.put(id, pack);
+	private Pack addPack(String id) {
+		try{
+			Pack pack = packs.get(id);
+			if (pack == null) {
+				pack = new Pack(id, htmlHelper, authors, this, getProperties());
+				pack.refresh();
+				packs.put(id, pack);
+			}
+			return pack;
+		} catch (Exception e) {
+			return null;
 		}
-		return pack;
 	}
 
 	@ResponseBody
@@ -336,6 +336,16 @@ public class PackController extends FolderKeaper implements FormMaterial {
 	public FileSystemResource downloadDocFile(@PathVariable("id") String id, @RequestParam("path") String path, HttpServletResponse response) {
 		response.setHeader("Content-Disposition", "attachment; filename=\"" + id + ".docx\"");
 		return new FileSystemResource(path);
+	}
+
+	@Override
+	public String base() {
+		return "/packs";
+	}
+
+	@Override
+	public HtmlHelper htmlHelper() {
+		return htmlHelper;
 	}
 
 //	public static void main(String[] args) throws IOException, URISyntaxException {
