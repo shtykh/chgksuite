@@ -105,6 +105,11 @@ public abstract class ListCatalogue<T extends Jsonable & Indexed> extends Catalo
 	}
 
 	@Override
+	protected String nextName(String name) {
+		return String.valueOf(Integer.decode(name) + 1);
+	}
+
+	@Override
 	public Comparator<? super File> getFilesComparator() {
 		return new Comparator<File>() {
 			@Override

@@ -114,8 +114,21 @@ public class Parser4s {
 	}
 
 //	public static void main(String[] args) {
+//		String inputPath = "/Users/shtykh/bellit.txt";
+//		String input = Util.read(inputPath);
+//		String[] split = input.split("Теги:\n");
+//		for (String s : split) {
+//			String[] split1 = s.split("Добавить");
+//			try {
+//				System.out.println(split1[0].split("\n")[1]);
+//			}catch (Exception e) {
+//				System.out.println(split1[0].split("\n")[0]);
+//			}
+//		}
+//
 //		Parser4s p = parseMock();
 //		System.out.println("ok");
+//
 //	}
 
 	public static Parser4s parseMock() {

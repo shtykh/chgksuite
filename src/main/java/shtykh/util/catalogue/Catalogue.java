@@ -1,5 +1,6 @@
 package shtykh.util.catalogue;
 
+import org.apache.commons.io.FileExistsException;
 import shtykh.util.CSV;
 import shtykh.util.Jsonable;
 import shtykh.util.Util;
@@ -17,7 +18,6 @@ import static shtykh.util.Util.read;
 public abstract class Catalogue<K,T extends Jsonable> extends FolderKeaper implements FormMaterial {
 	private final Class<T> clazz;
 	protected FormParameterMaterial<CSV> keys = new FormParameterMaterial<>(new CSV(""), CSV.class);
-	
 
 	public Catalogue(Class<T> clazz) {
 		super();
@@ -33,6 +33,8 @@ public abstract class Catalogue<K,T extends Jsonable> extends FolderKeaper imple
 		super.refresh();
 		refreshKeys();
 	}
+
+	protected abstract void refreshKeys();
 
 	@Override
 	public void refreshFile(File file) {
@@ -67,12 +69,26 @@ public abstract class Catalogue<K,T extends Jsonable> extends FolderKeaper imple
 	public void replace(K name, String folder) throws Exception {
 		File destFolder = new File(this.folder.getAbsolutePath().replace(this.folder.getName(), folder));
 		File fileToReplace = file(name);
-		Util.copyFileToDir(fileToReplace.getAbsolutePath(), destFolder);
-		fileToReplace.delete();
+		String destName = fileToReplace.getName();
+		while(true) {
+			try {
+				Util.copyFileToDir(fileToReplace, destFolder, destName);
+				fileToReplace.delete();
+				break;
+			} catch (FileExistsException fee) {
+				destName = nextName(destName);
+			}
+		}
 		refresh();
 	}
 
-	protected abstract void refreshKeys();
+	/**
+	 * 
+	 * @param name - previousName
+	 * @return name is used while name is already taken
+	 */
+	protected abstract String nextName(String name);
+
 	protected abstract K getFileName(T p);
 	public abstract void add(K number, T item);
 	public abstract T get(K key);

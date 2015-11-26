@@ -8,9 +8,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import shtykh.quedit.pack.Pack;
+import shtykh.util.CSV;
 import shtykh.util.catalogue.FolderKeaper;
 import shtykh.util.html.HtmlHelper;
 import shtykh.util.html.TableBuilder;
+import shtykh.util.html.form.material.FormMaterial;
+import shtykh.util.html.form.material.FormParameterMaterial;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
@@ -32,8 +35,9 @@ import static shtykh.util.html.HtmlHelper.htmlPage;
  */
 
 @Controller
-public class PackController extends FolderKeaper {
+public class PackController extends FolderKeaper implements FormMaterial {
 	private static final Logger log = LoggerFactory.getLogger(PackController.class);
+	protected FormParameterMaterial<CSV> packNames = new FormParameterMaterial<>(new CSV(""), CSV.class);
 	private Map<String, Pack> packs = new TreeMap<>();
 
 	private HtmlHelper htmlHelper;
@@ -69,6 +73,12 @@ public class PackController extends FolderKeaper {
 			addPack(file.getName());
 		}
 		catch (FileNotFoundException ignored) {}
+	}
+
+	@Override
+	public void refresh() throws Exception {
+		super.refresh();
+		packNames.set(new CSV(packs.keySet()));
 	}
 
 	@Override
@@ -136,8 +146,11 @@ public class PackController extends FolderKeaper {
 	}
 
 	private Pack addPack(String id) throws FileNotFoundException {
-		Pack pack = new Pack(id, htmlHelper, authors, getProperties());
-		packs.put(id, pack);
+		Pack pack = packs.get(id);
+		if (pack == null) {
+			pack = new Pack(id, htmlHelper, authors, this, getProperties());
+			packs.put(id, pack);
+		}
 		return pack;
 	}
 
@@ -203,8 +216,10 @@ public class PackController extends FolderKeaper {
 
 	@ResponseBody
 	@RequestMapping("{id}/replace")
-	public String replace(@PathVariable("id") String id, @RequestParam("index") int index) {
-		return getOr404(id, "replace", index);
+	public String replace(@PathVariable("id") String id, 
+						  @RequestParam("index") int index, 
+						  @RequestParam("packNames") String packNames) {
+		return getOr404(id, "replace", index, packNames);
 	}
 
 	@ResponseBody

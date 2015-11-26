@@ -1,6 +1,7 @@
 package shtykh.quedit.question;
 
 import org.apache.commons.lang.StringUtils;
+import shtykh.rest.PackController;
 import shtykh.util.CSV;
 import shtykh.quedit._4s.FormParameterMaterial4s;
 import shtykh.quedit._4s.Type4s;
@@ -24,6 +25,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  */
 public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Indexed, TableRowMaterial {
 	private AuthorsCatalogue authors;
+	private PackController packs;
 	private FormParameterMaterial<String> unaudible;
 	private FormParameterMaterial<Integer> index;
 	private FormParameterMaterial4s number;
@@ -91,7 +93,12 @@ public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Inde
 		append(sb, comment);
 		appendSources(sb);
 		appendAuthor(sb);
-		return sb.toString();
+		String result = sb.toString();
+		result = result.replaceAll("\n\n*", "\n");
+		if (result.endsWith("\n")) {
+			result = result.substring(0, result.length());
+		}
+		return result;
 	}
 
 	private void appendAuthor(StringBuilder sb) {
@@ -201,10 +208,15 @@ public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Inde
 		author.add(authors.get(name));
 	}
 
-	public void setAuthors(AuthorsCatalogue authors) {
+	public void setAuthors(AuthorsCatalogue authors) throws Exception {
 		this.authors = authors;
+		authors.refresh();
 	}
 
+	public void setPacks(PackController packs) throws Exception {
+		this.packs = packs;
+		packs.refresh();
+	}
 
 	public void setColor(String colorhex) {
 		color.setValueString(colorhex);
@@ -213,7 +225,6 @@ public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Inde
 	public String getColor() {
 		return color.getValueString();
 	}
-
 	@Override
 	public String to4s() {
 		return toString();
@@ -222,4 +233,5 @@ public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Inde
 	public boolean empty() {
 		return StringUtils.isEmpty(text.get()) && StringUtils.isEmpty(answer.get());
 	}
+
 }

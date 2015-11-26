@@ -14,6 +14,7 @@ import shtykh.quedit.numerator.QuestionNaturalNumerator;
 import shtykh.quedit.numerator.QuestionNumerator;
 import shtykh.quedit.question.Question;
 import shtykh.rest.AuthorsCatalogue;
+import shtykh.rest.PackController;
 import shtykh.util.Jsonable;
 import shtykh.util.StringSerializer;
 import shtykh.util.Util;
@@ -50,6 +51,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	private final String id;
 	private final HtmlHelper htmlHelper;
 	private final AuthorsCatalogue authors;
+	private final PackController packs;
 	private PackInfo info;
 
 	private ActionBuilder editQuestionAction;
@@ -60,13 +62,15 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	private ActionBuilder addTesterAction;
 	private ActionBuilder removeEditorAction;
 	private ActionBuilder removeTesterAction;
+	private ActionBuilder replaceQuestionAction;
 	private Boolean debug = false;
 
-	public Pack(String id, HtmlHelper htmlHelper, AuthorsCatalogue authors, Properties properties) throws FileNotFoundException {
+	public Pack(String id, HtmlHelper htmlHelper, AuthorsCatalogue authors, PackController packs, Properties properties) throws FileNotFoundException {
 		super(Question.class);
 		this.id = id;
 		this.htmlHelper = htmlHelper;
 		this.authors = authors;
+		this.packs = packs;
 		setProperties(properties);
 		afterRun();
 		initActions();
@@ -154,7 +158,11 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		addTesterAction = new ActionBuilder(address("addTester"));
 		removeEditorAction = new ActionBuilder(address("removeEditor"));
 		removeTesterAction = new ActionBuilder(address("removeTester"));
+		replaceQuestionAction = new ActionBuilder(address("replace"));
 		try {
+			replaceQuestionAction
+					.addParam(PackController.class, "packNames", "Переместить в пакет", select)
+					.addParam(Question.class, "index", "Номер", hidden);
 			editQuestionAction
 					.addParam(Question.class, "number", "Номер", comment)
 					.addParam(Question.class, "index", "Номер", hidden)
@@ -316,16 +324,24 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	public String editForm(int index) {
-		Question question = get(index);
-		if (question == null) {
-			question = Question.mock();
-			question.newIndex(size());
-		} else {
-			question.newIndex(index);
+		try {
+			Question question = get(index);
+			if (question == null) {
+				question = Question.mock();
+				question.newIndex(size());
+			} else {
+				question.newIndex(index);
+			}
+			question.setNumber(numerator().getNumber(question.index()));
+			question.setPacks(packs);
+			String body = questionHtml(question)
+					+ href(uri("editAuthorForm", new Parameter<>("index", index)), "Редактировать авторов")
+					+ replaceQuestionAction.buildForm(question)
+					+ editQuestionAction.buildForm(question);
+			return htmlPage("Отредактируйте вопрос", body);
+		} catch (Exception e) {
+			return error(e);
 		}
-		question.setNumber(numerator().getNumber(question.index()));
-		String body = questionHtml(question) + href(uri("editAuthorForm", new Parameter<>("index", index)), "Редактировать авторов") + editQuestionAction.buildForm(question);
-		return htmlPage("Отредактируйте вопрос", body);
 	}
 
 	public String editAuthorForm(int index) throws Exception {
@@ -362,8 +378,11 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 	}
 
-	public String replace(int index) throws Exception {
-		super.replace(index, "zapas");
+	public String replace(int index, String packNames) throws Exception {
+		if (packNames == null) {
+			packNames = "zapas";
+		}
+		super.replace(index, packNames);
 		return home();
 	}
 
@@ -409,11 +428,15 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			 int index,
 			 String author
 	) {
-		Question question = get(index);
-		question.setAuthors(authors);
-		question.addAuthor(author);
-		add(index, question);
-		return editForm(index);
+		try {
+			Question question = get(index);
+			question.setAuthors(authors);
+			question.addAuthor(author);
+			add(index, question);
+			return editForm(index);
+		} catch (Exception e) {
+			return error(e);
+		}
 	}
 
 	public String removeAuthor(

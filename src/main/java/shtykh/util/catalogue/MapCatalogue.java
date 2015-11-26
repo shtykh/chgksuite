@@ -32,6 +32,11 @@ public abstract class MapCatalogue<T extends Jsonable> extends Catalogue<String,
 	}
 
 	@Override
+	protected String nextName(String name) {
+		return name + "_" + 1;
+	}
+
+	@Override
 	protected void clearCash() {
 		map.clear();
 	}

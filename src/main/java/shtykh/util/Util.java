@@ -1,5 +1,6 @@
 package shtykh.util;
 
+import org.apache.commons.io.FileExistsException;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.springframework.web.multipart.MultipartFile;
@@ -59,9 +60,15 @@ public class Util {
 		}
 	}
 
-	public static File copyFileToDir(String sourcePath, File destFolder) throws IOException {
-		File source = new File(sourcePath);
-		File dest = new File(destFolder.getAbsolutePath() + "/" + source.getName());
+	public static File copyFileToDir(File source, File destFolder) throws IOException {
+		return copyFileToDir(source, destFolder, source.getName());
+	}
+	
+	public static File copyFileToDir(File source, File destFolder, String destName) throws IOException {
+		File dest = new File(destFolder.getAbsolutePath() + "/" + destName);
+		if (dest.exists()) {
+			throw new FileExistsException(dest);
+		}
 		FileUtils.copyFile(source, dest);
 		return dest;
 	}
