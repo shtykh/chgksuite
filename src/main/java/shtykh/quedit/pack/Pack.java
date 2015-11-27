@@ -161,7 +161,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		addTesterAction = new ActionBuilder(address("addTester"));
 		removeEditorAction = new ActionBuilder(address("removeEditor"));
 		removeTesterAction = new ActionBuilder(address("removeTester"));
-		replaceQuestionAction = new ActionBuilder(address("replace"));
+		replaceQuestionAction = new ActionBuilder(address("copyTo"));
 		try {
 			replaceQuestionAction
 					.addParam(PackController.class, "packNames", "Переместить в пакет", select)
@@ -386,12 +386,12 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 	}
 
-	public String replace(int index, String packNames) throws Exception {
+	public String copyTo(int index, String packNames) throws Exception {
 		if (packNames == null) {
 			packNames = "zapas";
 		}
-		super.replace(index, packNames);
-		return home();
+		super.copyTo(index, packNames);
+		return editForm(index);
 	}
 
 	public String upMethod( int index) throws Exception {

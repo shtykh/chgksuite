@@ -215,7 +215,7 @@ public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Inde
 
 	public void setPacks(PackController packs) throws Exception {
 		this.packs = packs;
-		packs.refresh();
+		packs.refreshNames();
 	}
 
 	public void setColor(String colorhex) {

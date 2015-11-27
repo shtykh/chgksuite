@@ -60,6 +60,19 @@ public abstract class FolderKeaper implements PropertyReader {
 		}
 	}
 
+	public List<String> listFileNames() throws Exception{
+		clearCash();
+		List<File> files = Arrays.asList(folder.listFiles());
+		Collections.sort(files, getFilesComparator());
+		List<String> goodFiles = new ArrayList<>();
+		for (File file : files) {
+			if (isGood(file)) {
+				goodFiles.add(file.getName());
+			}
+		}
+		return goodFiles;
+	}
+
 	public void clearFolder() {
 		clearCash();
 		for(File file: folder.listFiles()) {

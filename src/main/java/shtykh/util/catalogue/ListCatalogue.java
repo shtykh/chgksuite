@@ -99,9 +99,8 @@ public abstract class ListCatalogue<T extends Jsonable & Indexed> extends Catalo
 	}
 
 	@Override
-	public void replace(Integer name, String folder) throws Exception {
-		list.remove(name);
-		super.replace(name, folder);
+	public void copyTo(Integer name, String folder) throws Exception {
+		super.copyTo(name, folder);
 	}
 
 	@Override

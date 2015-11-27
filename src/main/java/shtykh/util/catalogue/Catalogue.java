@@ -66,14 +66,13 @@ public abstract class Catalogue<K,T extends Jsonable> extends FolderKeaper imple
 		refresh();
 	}
 
-	public void replace(K name, String folder) throws Exception {
+	public void copyTo(K name, String folder) throws Exception {
 		File destFolder = new File(this.folder.getAbsolutePath().replace(this.folder.getName(), folder));
 		File fileToReplace = file(name);
 		String destName = fileToReplace.getName();
 		while(true) {
 			try {
 				Util.copyFileToDir(fileToReplace, destFolder, destName);
-				fileToReplace.delete();
 				break;
 			} catch (FileExistsException fee) {
 				destName = nextName(destName);

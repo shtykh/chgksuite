@@ -99,7 +99,7 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			public String getCell(Question question) {
 				int i = question.index();
 				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-				URI uriReplace = pack.uri("replace", parameter);
+				URI uriReplace = pack.uri("copyTo", parameter);
 				return href(uriReplace, "В запас");
 			}
 		});

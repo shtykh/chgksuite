@@ -17,7 +17,6 @@ import shtykh.util.html.form.material.FormMaterial;
 import shtykh.util.html.form.material.FormParameterMaterial;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -28,8 +27,7 @@ import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static shtykh.util.html.HtmlHelper.href;
-import static shtykh.util.html.HtmlHelper.htmlPage;
+import static shtykh.util.html.HtmlHelper.*;
 
 /**
  * Created by shtykh on 01/10/15.
@@ -84,13 +82,20 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	private String getOr404(String id, String methodName, Object... args) {
 		Pack pack = packs.get(id);
 		if (pack == null) {
-			return (String) Response.status(404).build().getEntity();
-		} else {
 			try {
-				return (String) findMethodByName(Pack.class, methodName).invoke(pack, args);
-			} catch (NoSuchMethodException | InvocationTargetException | ClassCastException | IllegalAccessException e) {
-				throw new RuntimeException(e);
+				refresh();
+				pack = packs.get(id);
+			} catch (Exception e) {
+				return error(e);
 			}
+			if (pack == null) {
+				return errorPage("Пакет " + id + " не был найден в папке " + folderPath());
+			}
+		}
+		try {
+			return (String) findMethodByName(Pack.class, methodName).invoke(pack, args);
+		} catch (NoSuchMethodException | InvocationTargetException | ClassCastException | IllegalAccessException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -215,11 +220,11 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	}
 
 	@ResponseBody
-	@RequestMapping("{id}/replace")
+	@RequestMapping("{id}/copyTo")
 	public String replace(@PathVariable("id") String id, 
 						  @RequestParam("index") int index, 
 						  @RequestParam("packNames") String packNames) {
-		return getOr404(id, "replace", index, packNames);
+		return getOr404(id, "copyTo", index, packNames);
 	}
 
 	@ResponseBody
@@ -346,6 +351,10 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	@Override
 	public HtmlHelper htmlHelper() {
 		return htmlHelper;
+	}
+
+	public void refreshNames() throws Exception {
+		packNames.set(new CSV(listFileNames()));
 	}
 
 //	public static void main(String[] args) throws IOException, URISyntaxException {
