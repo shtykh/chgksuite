@@ -16,6 +16,7 @@ import shtykh.util.html.param.Parameter;
 import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 
 import static shtykh.util.html.HtmlHelper.*;
 import static shtykh.util.html.form.param.FormParameterType.text;
@@ -126,5 +127,11 @@ public class AuthorsCatalogue extends MapCatalogue<SinglePerson> implements UriG
 	@Override
 	public HtmlHelper htmlHelper() {
 		return htmlHelper;
+	}
+
+	public void addAll(Collection<SinglePerson> persons) {
+		for (SinglePerson person : persons) {
+			add(person);
+		}
 	}
 }

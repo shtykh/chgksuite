@@ -320,10 +320,14 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 
 	public void fromParser(Parser4s parser4s) {
 		info = parser4s.getInfo();
+		if (StringUtils.isBlank(info.getName())) {
+			info.setName(id);
+		}
 		info.save(infoPath());
 		for (Question question : parser4s.getQuestions()) {
 			add(question);
 		}
+		authors.addAll(parser4s.getPersons());
 	}
 
 	public String editForm(int index) {

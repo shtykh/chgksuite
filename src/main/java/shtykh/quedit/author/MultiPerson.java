@@ -6,6 +6,8 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by shtykh on 01/10/15.
@@ -13,8 +15,14 @@ import java.util.List;
 public class MultiPerson extends Person {
 	List<SinglePerson> personList = new ArrayList<>();
 	
-	public MultiPerson add(SinglePerson person) {
-		personList.add(person);
+	public MultiPerson add(Person person) {
+		if (person instanceof SinglePerson) {
+			personList.add((SinglePerson)person);
+		} else {
+			for (SinglePerson singlePerson : ((MultiPerson) person).getPersonList()) {
+				personList.add(singlePerson);
+			}
+		}
 		return this;
 	}
 
@@ -56,9 +64,13 @@ public class MultiPerson extends Person {
 
 	public MultiPerson fromString(String value) {
 		personList = new ArrayList<>();
-		String[] persons = value.split("\\,");
-		for (String person : persons) {
-			personList.add(SinglePerson.fromString(person));
+		Pattern pattern = Pattern.compile("([^\\(\\)]*)(\\(([^\\)]*)\\))*");
+		Matcher matcher = pattern.matcher(value);
+		while (matcher.find()) {
+			SinglePerson person = SinglePerson.fromStrings(matcher.group(1), matcher.group(3));
+			if (! person.empty()) {
+				personList.add(person);
+			}
 		}
 		return this;
 	}

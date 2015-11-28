@@ -6,6 +6,10 @@ import shtykh.util.html.form.material.FormMaterial;
 import shtykh.util.html.form.material.FormParameterMaterial;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.util.Arrays;
+
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 /**
  * Created by shtykh on 01/10/15.
  */
@@ -66,13 +70,26 @@ public class SinglePerson extends Person implements FormMaterial, Jsonable {
 //	}
 	
 	public int compareTo(SinglePerson o) {
-		int lastNameComp = getLastName().compareTo(o.getLastName());
+		int lastNameComp = compareStrings(getLastName(), o.getLastName());
 		if (lastNameComp != 0) { return lastNameComp; } else {
-			int firstNameComp = getFirstName().compareTo(o.getFirstName());
+			int firstNameComp = compareStrings(getFirstName(), o.getFirstName());
 			if (firstNameComp != 0) { return firstNameComp; } else {
-				return getCity().compareTo(o.getCity());
+				return compareStrings(getCity(), o.getCity());
 			}	
 		}
+	}
+
+	private int compareStrings(String obj1, String obj2) {
+		if (obj1 == obj2) {
+			return 0;
+		}
+		if (obj1 == null) {
+			return -1;
+		}
+		if (obj2 == null) {
+			return 1;
+		}
+		return obj1.compareTo(obj2);
 	}
 
 	@Override
@@ -97,5 +114,21 @@ public class SinglePerson extends Person implements FormMaterial, Jsonable {
 			person.setCity(StringUtils.trim(city));
 		}
 		return person;
+	}
+
+	public static SinglePerson fromStrings(String name, String city) {
+		SinglePerson person = new SinglePerson();
+		String[] names = name.split("\\s");
+		if (names.length > 0) {
+			person.setLastName(names[names.length - 1]);
+			names = Arrays.copyOfRange(names, 0, names.length - 1);
+			person.setFirstName(StringUtils.join(names, " "));
+		}
+		person.setCity(city);
+		return person;
+	}
+
+	public boolean empty() {
+		return isBlank(firstName.get()) && isBlank(lastName.get()) && isBlank(city.get());
 	}
 }

@@ -44,7 +44,7 @@ public class PackInfo implements FormMaterial, Authored, Jsonable, _4Sable {
 		numerator = new QuestionNaturalNumerator(1);
 	}
 	
-	public void addAuthor(SinglePerson name) {
+	public void addAuthor(Person name) {
 		if (author == null) {
 			author = new MultiPerson();
 		}
@@ -189,4 +189,11 @@ public class PackInfo implements FormMaterial, Authored, Jsonable, _4Sable {
 		this.numerator = numerator;
 	}
 
+	public void addMetaInfo(String value) {
+		String was = metaInfo.get();
+		if (was == null) {
+			was = "";
+		}
+		metaInfo.set(was + "\n" + value);
+	}
 }

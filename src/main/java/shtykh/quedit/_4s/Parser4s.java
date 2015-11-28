@@ -1,12 +1,12 @@
 package shtykh.quedit._4s;
 
 import shtykh.quedit.author.MultiPerson;
+import shtykh.quedit.author.SinglePerson;
 import shtykh.quedit.pack.PackInfo;
 import shtykh.quedit.question.Question;
 import shtykh.util.Util;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by shtykh on 09/10/15.
@@ -15,6 +15,7 @@ public class Parser4s {
 	private List<Question> questions;
 
 	private PackInfo info;
+	private Set<SinglePerson> persons;
 
 	public Parser4s(String filePath) throws Exception {
 		String _4s = Util.read(filePath);
@@ -24,6 +25,7 @@ public class Parser4s {
 	private void parse(String string) throws Exception {
 		questions = new ArrayList<>();
 		info = new PackInfo();
+		persons = new TreeSet<>();
 		String[] questionStrings = string.split("\n\n+");
 		for (String qs : questionStrings) {
 			parseQuestion(qs);
@@ -67,13 +69,13 @@ public class Parser4s {
 					info.setNameLJ(value);
 					break;
 				case EDITOR:
-					info.setAuthor(new MultiPerson().fromString(value));
+					info.addAuthor(initMultiPerson(value));
 					break;
 				case DATE:
 					info.setDate(value);
 					break;
 				case META:
-					info.setMetaInfo(value);
+					info.addMetaInfo(value);
 					break;
 				case QUESTION:
 					q.setText(value);
@@ -97,7 +99,7 @@ public class Parser4s {
 					q.setSources(value);
 					break;
 				case AUTHORS:
-					q.setAuthor(new MultiPerson().fromString(value));
+					q.setAuthor(initMultiPerson(value));
 					break;
 				case LIST_ELEM:
 					break;
@@ -107,6 +109,14 @@ public class Parser4s {
 		} catch (Exception e) {
 			throw new Exception("Could not properly read \"" + value + "\" as " + type4s, e);
 		}
+	}
+
+	private MultiPerson initMultiPerson(String value) {
+		MultiPerson person = new MultiPerson().fromString(value);
+		for (SinglePerson singlePerson : person.getPersonList()) {
+			persons.add(singlePerson);
+		}
+		return person;
 	}
 
 	public List<Question> getQuestions() {
@@ -138,5 +148,9 @@ public class Parser4s {
 	public static Parser4s parseMock() throws Exception {
 		String path = "/Users/shtykh/bot/target/4s.4s";
 		return new Parser4s(path);
+	}
+
+	public Collection<SinglePerson> getPersons() {
+		return persons;
 	}
 }

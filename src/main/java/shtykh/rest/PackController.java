@@ -20,7 +20,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -94,8 +93,8 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 		}
 		try {
 			return (String) findMethodByName(Pack.class, methodName).invoke(pack, args);
-		} catch (NoSuchMethodException | InvocationTargetException | ClassCastException | IllegalAccessException e) {
-			throw new RuntimeException(e);
+		} catch (Exception e) {
+			return error(e);
 		}
 	}
 
