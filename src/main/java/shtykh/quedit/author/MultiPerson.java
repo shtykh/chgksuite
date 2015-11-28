@@ -60,7 +60,6 @@ public class MultiPerson extends Person {
 		for (String person : persons) {
 			personList.add(SinglePerson.fromString(person));
 		}
-
 		return this;
 	}
 	

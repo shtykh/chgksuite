@@ -16,12 +16,12 @@ public class Parser4s {
 
 	private PackInfo info;
 
-	public Parser4s(String filePath) {
+	public Parser4s(String filePath) throws Exception {
 		String _4s = Util.read(filePath);
 		parse(_4s);
 	}
 
-	private void parse(String string) {
+	private void parse(String string) throws Exception {
 		questions = new ArrayList<>();
 		info = new PackInfo();
 		String[] questionStrings = string.split("\n\n+");
@@ -30,7 +30,7 @@ public class Parser4s {
 		}
 	}
 
-	private void parseQuestion(String qs) {
+	private void parseQuestion(String qs) throws Exception {
 		Question q = new Question();
 		String[] lines = qs.split("\n+");
 		Type4s currentType = Type4s.NONE;
@@ -57,51 +57,55 @@ public class Parser4s {
 		}
 	}
 
-	private void set4s(Type4s type4s, String value, Question q) {
-		switch (type4s) {
-			case TITLE:
-				info.setName(value);
-				break;
-			case TITLE_LJ:
-				info.setNameLJ(value);
-				break;
-			case EDITOR:
-				info.setAuthor(new MultiPerson().fromString(value));
-				break;
-			case DATE:
-				info.setDate(value);
-				break;
-			case META:
-				info.setMetaInfo(value);
-				break;
-			case QUESTION:
-				q.setText(value);
-				break;
-			case NUMBER:
-				q.setNumber(value);
-				break;
-			case ANSWER:
-				q.setAnswer(value);
-				break;
-			case EQUAL_ANSWER:
-				q.setPossibleAnswers(value);
-				break;
-			case NOT_EQUAL_ANSWER:
-				q.setImpossibleAnswers(value);
-				break;
-			case COMMENT:
-				q.setComment(value);
-				break;
-			case SOURCES:
-				q.setSources(value);
-				break;
-			case AUTHORS:
-				q.setAuthor(new MultiPerson().fromString(value));
-				break;
-			case LIST_ELEM:
-				break;
-			case NONE:
-				break;
+	private void set4s(Type4s type4s, String value, Question q) throws Exception {
+		try {
+			switch (type4s) {
+				case TITLE:
+					info.setName(value);
+					break;
+				case TITLE_LJ:
+					info.setNameLJ(value);
+					break;
+				case EDITOR:
+					info.setAuthor(new MultiPerson().fromString(value));
+					break;
+				case DATE:
+					info.setDate(value);
+					break;
+				case META:
+					info.setMetaInfo(value);
+					break;
+				case QUESTION:
+					q.setText(value);
+					break;
+				case NUMBER:
+					q.setNumber(value);
+					break;
+				case ANSWER:
+					q.setAnswer(value);
+					break;
+				case EQUAL_ANSWER:
+					q.setPossibleAnswers(value);
+					break;
+				case NOT_EQUAL_ANSWER:
+					q.setImpossibleAnswers(value);
+					break;
+				case COMMENT:
+					q.setComment(value);
+					break;
+				case SOURCES:
+					q.setSources(value);
+					break;
+				case AUTHORS:
+					q.setAuthor(new MultiPerson().fromString(value));
+					break;
+				case LIST_ELEM:
+					break;
+				case NONE:
+					break;
+			}
+		} catch (Exception e) {
+			throw new Exception("Could not properly read \"" + value + "\" as " + type4s, e);
 		}
 	}
 
@@ -131,7 +135,7 @@ public class Parser4s {
 //
 //	}
 
-	public static Parser4s parseMock() {
+	public static Parser4s parseMock() throws Exception {
 		String path = "/Users/shtykh/bot/target/4s.4s";
 		return new Parser4s(path);
 	}

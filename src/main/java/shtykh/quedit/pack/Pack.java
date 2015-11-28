@@ -271,7 +271,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 	}
 
-	private void fron4sFile(File file) {
+	private void fron4sFile(File file) throws Exception {
 		Parser4s parser4s = new Parser4s(file.getAbsolutePath());
 		this.fromParser(parser4s);
 		file.delete();
