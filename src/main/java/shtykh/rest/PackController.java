@@ -217,6 +217,12 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	}
 
 	@ResponseBody
+	@RequestMapping("{id}/editCommonAuthorForm")
+	public String editCommonAuthorForm(@PathVariable("id") String id) throws URISyntaxException {
+		return getOr404(id, "editCommonAuthorForm");
+	}
+
+	@ResponseBody
 	@RequestMapping("{id}/remove")
 	public String removeMethod(@PathVariable("id") String id, @RequestParam("index") int index) {
 		return getOr404(id, "removeMethod", index);
@@ -263,20 +269,38 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	@RequestMapping("{id}/editAuthor")
 	public String editAuthor(
 			@PathVariable("id") String id,
-			@RequestParam("index") int index,
+			@RequestParam("index") Integer index,
 			@RequestParam("keys") String author
 	) {
 		return getOr404(id, "editAuthor", index, author);
 	}
 
 	@ResponseBody
+	@RequestMapping("{id}/editCommonAuthor")
+	public String editCommonAuthor(
+			@PathVariable("id") String id,
+			@RequestParam("keys") String author
+	) {
+		return getOr404(id, "editCommonAuthor", author);
+	}
+
+	@ResponseBody
 	@RequestMapping("{id}/removeAuthor")
 	public String removeAuthor(
 			@PathVariable("id") String id,
-			@RequestParam("index") int index,
+			@RequestParam("index") Integer index,
 			@RequestParam("keys") String author
 	) {
 		return getOr404(id, "removeAuthor", index, author);
+	}
+
+	@ResponseBody
+	@RequestMapping("{id}/removeCommonAuthor")
+	public String removeCommonAuthor(
+			@PathVariable("id") String id,
+			@RequestParam("keys") String author
+	) {
+		return getOr404(id, "removeCommonAuthor", author);
 	}
 
 	@ResponseBody

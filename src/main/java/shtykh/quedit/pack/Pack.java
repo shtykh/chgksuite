@@ -60,6 +60,8 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	private ActionBuilder editQuestionAction;
 	private ActionBuilder editAuthorAction;
 	private ActionBuilder removeAuthorAction;
+	private ActionBuilder editCommonAuthorAction;
+	private ActionBuilder removeCommonAuthorAction;
 	private ActionBuilder editPackAction;
 	private ActionBuilder addEditorAction;
 	private ActionBuilder addTesterAction;
@@ -108,12 +110,13 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 					new Parameter<>("outFormat", outFormat),
 					new Parameter<>("debug", debug.toString()));
 			uriPreambula = uri("info");
-			hrefs = new TableBuilder("Загрузить",
-					href(uriBuilder("uploadForm/4s").build(), "Импорт пакета из 4s"),
-					href(uriBuilder("uploadForm/docx").build(), "Импорт пакета из docx"),
-					href(uriBuilder("uploadForm/pic").build(), "Загрузить картинку")
+			hrefs = new TableBuilder(
+					href(uri("uploadForm/4s"), "Импорт пакета из 4s"),
+					href(uri("uploadForm/docx"), "Импорт пакета из docx"),
+					href(uri("uploadForm/pic"), "Загрузить картинку"),
+					href(uri("editCommonAuthorForm"), "Автор всех вопросов")
 			);
-			hrefs.addRow("Выгрузить",
+			hrefs.addRow(
 					href(uriText, "Полный текст в 4s"),
 					href(uriBuild, "Сгенерировать пакет"),
 					href(uri("split/getColor"), "Разбить по цвету"));
@@ -160,6 +163,8 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		editQuestionAction = new ActionBuilder(address("edit"));
 		editAuthorAction = new ActionBuilder(address("editAuthor"));
 		removeAuthorAction = new ActionBuilder(address("removeAuthor"));
+		editCommonAuthorAction = new ActionBuilder(address("editCommonAuthor"));
+		removeCommonAuthorAction = new ActionBuilder(address("removeCommonAuthor"));
 		editPackAction = new ActionBuilder(address("editPack"));
 		addEditorAction = new ActionBuilder(address("addEditor"));
 		addTesterAction = new ActionBuilder(address("addTester"));
@@ -189,6 +194,11 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			removeAuthorAction
 					.addParam(Catalogue.class, "keys", "Удалить автора", select)
 					.addParam(Question.class, "index", "Номер", hidden)
+			;editCommonAuthorAction
+					.addParam(Catalogue.class, "keys", "Добавить автора", select)
+			;
+			removeCommonAuthorAction
+					.addParam(Catalogue.class, "keys", "Удалить автора", select)
 			;
 			addEditorAction
 					.addParam(Catalogue.class, "keys", "Добавить редактора", select)
@@ -345,8 +355,6 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			}
 			question.setNumber(numerator().getNumber(question.index()));
 			question.setPacks(packs);
-
-			
 			Parameter<String> parameter = new Parameter<>("index", String.valueOf(index));
 			String questionColor = question.getColor();
 			ColoredTableBuilder navigation = new ColoredTableBuilder();
@@ -384,6 +392,15 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 				+ removeAuthorAction.buildForm(question)
 				+ href(htmlHelper.uriBuilder("/authors/list").build(), "Каталог персонажей");
 		return htmlPage("Добавить автора", body);
+	}
+
+	public String editCommonAuthorForm() throws Exception {
+		authors.refresh();
+		String body = "Редоктировать автора ко всем вопросам " + id + "<br>"
+				+ editCommonAuthorAction.buildForm(authors)
+				+ removeCommonAuthorAction.buildForm(authors)
+				+ href(htmlHelper.uriBuilder("/authors/list").build(), "Каталог персонажей");
+		return htmlPage("Автор всех вопросов", body);
 	}
 
 	public String removeMethod(int index) throws Exception {
@@ -449,7 +466,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	public String editAuthor(
-			 int index,
+			 Integer index,
 			 String author
 	) {
 		try {
@@ -463,14 +480,51 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 	}
 
-	public String removeAuthor(
-			int index,
+	public String editCommonAuthor(
 			String author
 	) {
-		Question question = get(index);
-		((MultiPerson)question.getAuthor()).getPersonList().remove(authors.get(author));
-		add(index, question);
-		return editForm(index);
+		try {
+			for (int i = 0; i < getAll().size(); i++) {
+				editAuthor(i, author);
+			}
+			return home();
+		} catch (Exception e) {
+			return error(e);
+		}
+	}
+
+	public String removeAuthor(
+			Integer index,
+			String author
+	) {
+		try {
+
+			if (index == null) {
+				for (int i = 0; i < getAll().size(); i++) {
+					removeAuthor(i, author);
+				}
+				return home();
+			}
+			Question question = get(index);
+			((MultiPerson)question.getAuthor()).getPersonList().remove(authors.get(author));
+			add(index, question);
+			return editForm(index);
+		} catch (Exception e) {
+			return error(e);
+		}
+	}
+
+	public String removeCommonAuthor(
+			String author
+	) {
+		try {
+			for (int i = 0; i < getAll().size(); i++) {
+				removeAuthor(i, author);
+			}
+			return home();
+		} catch (Exception e) {
+			return error(e);
+		}
 	}
 
 	public String nextColor(
