@@ -8,6 +8,7 @@ import shtykh.util.html.form.material.FormMaterial;
 import shtykh.util.html.form.material.FormParameterMaterial;
 
 import java.io.File;
+import java.util.Collection;
 
 import static shtykh.util.Jsonable.fromJson;
 import static shtykh.util.Util.read;
@@ -95,4 +96,6 @@ public abstract class Catalogue<K,T extends Jsonable> extends FolderKeaper imple
 	protected abstract int size();
 
 	public abstract Iterable<T> getAll();
+
+	public abstract void addAll(Collection<T> questions);
 }

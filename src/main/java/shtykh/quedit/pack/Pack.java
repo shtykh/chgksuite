@@ -1,5 +1,7 @@
 package shtykh.quedit.pack;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.sun.research.ws.wadl.HTTPMethods;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -33,6 +35,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
@@ -471,8 +474,6 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		if (color.equals(Color.white)) {
 			color = Color.red;
 		} else if (color.equals(Color.red)) {
-			color = Color.yellow;
-		} else if (color.equals(Color.yellow)) {
 			color = Color.green;
 		} else {
 			color = Color.white;
@@ -481,6 +482,24 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		question.setColor(colorHex);
 		add(index, question);
 		return home();
+	}
+	
+	public String split(String methodName) throws Exception {
+		try{
+			Multimap<String, Question> map = ArrayListMultimap.create();
+			Method method = findMethodByName(Question.class, methodName);
+			for (Question question : getAll()) {
+				Object result = method.invoke(question);
+				String key = result == null ? "null" : result.toString();
+				map.put(key, question);
+			}
+			for (String key : map.keySet()) {
+				packs.addPack(id + "_" + key, map.get(key));
+			}
+			return home();
+		} catch (Exception e) {
+			return errorPage("Не удалось разбить " + id + " на подпакеты по признаку " + methodName);
+		}
 	}
 
 	public String text() throws IOException {

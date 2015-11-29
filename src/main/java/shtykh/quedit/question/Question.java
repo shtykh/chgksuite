@@ -48,7 +48,7 @@ public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Inde
 		impossibleAnswers = new FormParameterMaterial4s(Type4s.NOT_EQUAL_ANSWER, "");
 		comment = new FormParameterMaterial4s(Type4s.COMMENT, "");
 		sources = new FormParameterMaterial<>(new CSV(), CSV.class);
-		color = new FormParameterMaterial<>(Color.GREEN, Color.class);
+		color = new FormParameterMaterial<>(Color.WHITE, Color.class);
 		author = new MultiPerson();
 	}
 

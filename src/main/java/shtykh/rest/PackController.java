@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import shtykh.quedit.pack.Pack;
+import shtykh.quedit.question.Question;
 import shtykh.util.CSV;
 import shtykh.util.catalogue.FolderKeaper;
 import shtykh.util.html.HtmlHelper;
@@ -20,12 +21,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static shtykh.util.Util.findMethodByName;
 import static shtykh.util.html.HtmlHelper.*;
 
 /**
@@ -98,15 +100,6 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 		}
 	}
 
-	private Method findMethodByName(Class<?> clazz, String methodName) throws NoSuchMethodException{
-		for (Method method : clazz.getMethods()) {
-			if (method.getName().equals(methodName)) {
-				return method;
-			}
-		}
-		throw new NoSuchMethodException(clazz.toString() + "::" + methodName);
-	}
-
 	@ResponseBody
 	@RequestMapping("packs")
 	public String all() throws Exception {
@@ -124,12 +117,12 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	@ResponseBody
 	@RequestMapping("{id}")
 	public String getPack(@PathVariable("id") String id) throws Exception {
+		String namePattern = getProperty("namePattern");
 		if (id.equals("new")) {
-			return htmlPage("Новый пакет", "Впишите id пакета в адресную строку вместо \"new\"");
+			return htmlPage("Новый пакет", "Впишите id пакета в адресную строку вместо \"new\"<br>Формат имён : " + namePattern);
 		}
 		Pack pack = packs.get(id);
 		if (pack == null) {
-			String namePattern = getProperty("namePattern");
 			if (!id.matches(namePattern)) {
 				return htmlPage("Придумайте id попроще!", namePattern);
 			}
@@ -139,9 +132,20 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	}
 
 	@ResponseBody
+	@RequestMapping("{id}/split/{method}")
+	public String splitColor(@PathVariable("id") String id, @PathVariable("method") String method) throws IOException {
+		return getOr404(id, "split", method);
+	}
+
+	@ResponseBody
 	@RequestMapping("{id}/info")
 	public String info(@PathVariable("id") String id) throws IOException {
 		return getOr404(id, "info");
+	}
+
+	public void addPack(String key, Collection<Question> questions) {
+		Pack pack = addPack(key);
+		pack.addAll(questions);
 	}
 
 	private Pack addPack(String id) {
@@ -320,7 +324,7 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	) {
 		return getOr404(id, "nextColor", index, colorHex);
 	}
-	
+
 	@ResponseBody
 	@RequestMapping("{id}/text")
 	public String text(@PathVariable("id") String id) throws IOException {

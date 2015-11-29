@@ -7,10 +7,7 @@ import shtykh.util.Util;
 import shtykh.util.html.form.material.FormParameterMaterial;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by shtykh on 05/10/15.
@@ -90,6 +87,13 @@ public abstract class ListCatalogue<T extends Jsonable & Indexed> extends Catalo
 	@Override
 	protected void add(T p) {
 		add(size(), p);
+	}
+
+	@Override
+	public void addAll(Collection<T> objects) {
+		for (T object : objects) {
+			add(object);
+		}
 	}
 
 	@Override

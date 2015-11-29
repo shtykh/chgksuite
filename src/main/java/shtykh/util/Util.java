@@ -6,6 +6,7 @@ import org.apache.log4j.Logger;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -77,6 +78,15 @@ public class Util {
 		DateFormat df = new SimpleDateFormat(dateFormatString);
 		Date today = Calendar.getInstance().getTime();
 		return df.format(today);
+	}
+
+	public static Method findMethodByName(Class<?> clazz, String methodName) throws NoSuchMethodException{
+		for (Method method : clazz.getMethods()) {
+			if (method.getName().equals(methodName)) {
+				return method;
+			}
+		}
+		throw new NoSuchMethodException(clazz.toString() + "::" + methodName);
 	}
 
 	public static int call(StringLogger logs, String[] cmd) throws IOException {
