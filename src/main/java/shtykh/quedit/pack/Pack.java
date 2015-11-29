@@ -113,14 +113,15 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 					href(uriBuilder("uploadForm/docx").build(), "Импорт пакета из docx"),
 					href(uriBuilder("uploadForm/pic").build(), "Загрузить картинку")
 			);
+			hrefs.addRow("Выгрузить",
+					href(uriText, "Полный текст в 4s"),
+					href(uriBuild, "Сгенерировать пакет"),
+					href(uri("split/getColor"), "Разбить по цвету"));
 		} catch (Exception e) {
 			return error(e);
 		}
 
 		String hrefHome = href(uriHome, getName());
-		hrefs.addRow("Выгрузить",
-				href(uriText, "Полный текст в 4s"),
-				href(uriBuild, "Сгенерировать пакет"));
 		String body = 
 				href(uriPacks, "К списку пакетов") + 
 				hrefs.toString() + "<br>" +
@@ -179,7 +180,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 					.addParam(Question.class, "impossibleAnswers", "Незачёт", textarea)
 					.addParam(Question.class, "comment", "Комментарий", textarea)
 					.addParam(Question.class, "sources", "Источники (каждый с новой строки)", textarea)
-					.addParam(Question.class, "color", "Цвет(для удобства редактора)", color)
+					.addParam(Question.class, "color", "Цвет(Если красно-бело-зелёных не хватает)", color)
 			;
 			editAuthorAction
 					.addParam(Catalogue.class, "keys", "Добавить автора", select)
@@ -344,10 +345,18 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			}
 			question.setNumber(numerator().getNumber(question.index()));
 			question.setPacks(packs);
-			TableBuilder navigation = new TableBuilder()
-					.addRow(href(uri("editForm", new Parameter<>("index", index - 1)), "Назад"),
-							href(uri(""), "К пакету"),
-							href(uri("editForm", new Parameter<>("index", index + 1)), "Вперёд"));
+
+			
+			Parameter<String> parameter = new Parameter<>("index", String.valueOf(index));
+			String questionColor = question.getColor();
+			ColoredTableBuilder navigation = new ColoredTableBuilder();
+			URI uriColor = uri("nextColor", parameter, new Parameter<>("color", questionColor));
+			navigation.addRow(
+					href(uri("editForm", new Parameter<>("index", index - 1)), "Назад"),
+					href(uri(""), "К пакету"),
+					href(uriColor, questionColor),
+					href(uri("editForm", new Parameter<>("index", index + 1)), "Вперёд"));
+			navigation.addColor(0, 2, questionColor);
 			String body = navigation
 					+ questionHtml(question)
 					+ href(uri("editAuthorForm", new Parameter<>("index", index)), "Редактировать авторов")
@@ -481,7 +490,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		colorHex = serializer.toString(color);
 		question.setColor(colorHex);
 		add(index, question);
-		return home();
+		return editForm(index);
 	}
 	
 	public String split(String methodName) throws Exception {
