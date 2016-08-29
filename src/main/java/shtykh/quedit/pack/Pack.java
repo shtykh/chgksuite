@@ -68,7 +68,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return view.home(getName(), size(), getNumerator().getNumber(size()), getAll());
 	}
 	
-	public String info() {
+	public String info() throws Exception {
 		refresh();
 		return view.infoPage(info);
 	}
