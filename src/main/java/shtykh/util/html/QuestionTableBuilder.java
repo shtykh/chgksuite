@@ -20,7 +20,8 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 	private final Pack pack;
 	
 	public enum ColumnName {
-		NUMBER("Номер"), 
+		NUMBER("Номер"),
+		COLOR("Цвет"),
 		ANSWER("Ответ"),
 		EDIT("Редактировать"), 
 		AUTHORS("Авторы"), 
@@ -57,12 +58,18 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 		columns.put(ColumnName.NUMBER, new ColumnBuilder<Question>() {
 			@Override
 			public String getCell(Question question) {
+				return question.getNumber();
+			}
+		});
+		columns.put(ColumnName.COLOR, new ColumnBuilder<Question>() {
+			@Override
+			public String getCell(Question question) {
 				int i = question.index();
 				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
 				String questionColor = question.getColor();
 				URI uriColor = pack.uri("nextColor", parameter, new Parameter<>("color", questionColor));
 				addColor(i + 1, 0, questionColor);
-				return href(uriColor, pack.numerator().getNumber(i));
+				return href(uriColor, questionColor);
 			}
 		});
 		columns.put(ColumnName.ANSWER, new ColumnBuilder<Question>() {

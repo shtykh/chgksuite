@@ -8,7 +8,7 @@ import java.util.Collection;
 /**
  * Created by shtykh on 01/10/15.
  */
-public interface Numerator {
+public interface Numerator<T extends Numerable> {
 	String getNumber(int index);
 	int getIndex(String number);
 
@@ -19,4 +19,14 @@ public interface Numerator {
 		}
 		return new CSV(string);
 	}
+	
+	default void number(Integer number, T item) {
+		item.newIndex(number);
+		item.setNumber(getNumber(number));
+	}
+
+	default void renumber(T item) {
+		item.setNumber(getNumber(item.index()));
+	}
+
 }

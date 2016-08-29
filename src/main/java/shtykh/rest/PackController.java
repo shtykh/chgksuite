@@ -153,7 +153,7 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 		try{
 			Pack pack = packs.get(id);
 			if (pack == null) {
-				pack = new Pack(id, htmlHelper, authors, this, getProperties());
+				pack = new Pack(id, htmlHelper, authors, this);
 				pack.refresh();
 				packs.put(id, pack);
 			}

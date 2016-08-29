@@ -8,9 +8,8 @@ import java.util.*;
 /**
  * Created by shtykh on 08/10/15.
  */
-public abstract class FolderKeaper implements PropertyReader {
+public abstract class FolderKeaper extends PropertyReader {
 	protected File folder;
-	private Properties properties;
 
 	private void initFolder(String filename) {
 		try {
@@ -23,16 +22,6 @@ public abstract class FolderKeaper implements PropertyReader {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	@Override
-	public void setProperties(Properties properties) {
-		this.properties = properties;
-	}
-
-	@Override
-	public Properties getProperties() {
-		return properties;
 	}
 
 	@Override

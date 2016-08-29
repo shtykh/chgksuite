@@ -17,8 +17,9 @@ public class Parser4s {
 	private PackInfo info;
 	private Set<SinglePerson> persons;
 
-	public Parser4s(String filePath) throws Exception {
+	public Parser4s(String filePath, String picsFolderPath) throws Exception {
 		String _4s = Util.read(filePath);
+		_4s = _4s.replaceAll("(\\(img\\s+)", "$1" + picsFolderPath + "\\/");
 		parse(_4s);
 	}
 
@@ -127,27 +128,10 @@ public class Parser4s {
 		return info;
 	}
 
-//	public static void main(String[] args) {
-//		String inputPath = "/Users/shtykh/bellit.txt";
-//		String input = Util.read(inputPath);
-//		String[] split = input.split("Теги:\n");
-//		for (String s : split) {
-//			String[] split1 = s.split("Добавить");
-//			try {
-//				System.out.println(split1[0].split("\n")[1]);
-//			}catch (Exception e) {
-//				System.out.println(split1[0].split("\n")[0]);
-//			}
-//		}
-//
-//		Parser4s p = parseMock();
-//		System.out.println("ok");
-//
-//	}
-
 	public static Parser4s parseMock() throws Exception {
-		String path = "/Users/shtykh/bot/target/4s.4s";
-		return new Parser4s(path);
+		String path = "/Users/shtykh/local/codebrag/repos/chgksuiteweb/packs/rudn_2/20160829_123251/rudn_2.4s";
+		String pics = "/Users/shtykh/local/codebrag/repos/chgksuiteweb/packs/rudn_2/pics";
+		return new Parser4s(path, pics);
 	}
 
 	public Collection<SinglePerson> getPersons() {

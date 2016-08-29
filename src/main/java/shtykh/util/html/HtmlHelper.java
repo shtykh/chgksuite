@@ -91,7 +91,12 @@ public class HtmlHelper {
 	}
 
 	public static String error(Exception e) {
-		return htmlPage("Ошибка", e.getClass() + ": " + e.getMessage());
+		StringBuilder sb = new StringBuilder(e.getClass() + ": " + e.getMessage() + "<br>");
+		for (StackTraceElement stackTraceElement : e.getStackTrace()) {
+			sb.append(stackTraceElement + "<br>");
+		}
+
+		return htmlPage("Ошибка", sb.toString());
 	}
 
 	public String listResponce(String title, String... s) {

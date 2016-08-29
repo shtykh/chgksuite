@@ -20,10 +20,10 @@ public abstract class ListCatalogue<T extends Jsonable & Indexed> extends Catalo
 	}
 
 	protected void refreshKeys() {
-		keys.set(numerator().firstNumbers(size()));
+		keys.set(getNumerator().firstNumbers(size()));
 	}
 
-	protected abstract Numerator numerator();
+	protected abstract Numerator getNumerator();
 
 	protected void swap(int key, int key2) {
 		Collections.swap(list, key, key2);

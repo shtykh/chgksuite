@@ -8,17 +8,19 @@ import java.util.Properties;
 /**
  * Created by shtykh on 10/04/15.
  */
-public interface PropertyReader extends CommandLineRunner {
+public abstract class PropertyReader implements CommandLineRunner {
+
+	private Properties properties;
 
 	@Override
-	default void run(String[] args) {
+	public void run(String[] args) {
 		if (args.length < 1) {
 			throw new RuntimeException("getProperties() was not found");
 		} else {
 			String filename = args[0];
 			try {
 				setProperties(new Properties());
-				getProperties().load(new FileReader(filename));
+				properties.load(new FileReader(filename));
 				System.out.println(filename + " was read");
 				afterRun();
 			} catch (Exception e) {
@@ -27,17 +29,23 @@ public interface PropertyReader extends CommandLineRunner {
 		}
 	}
 
-	default String getProperty(String key) {
+	public String getProperty(String key) {
 		try {
-			return getProperties().getProperty(key);
+			return properties.getProperty(key);
+		} catch (NullPointerException npe) {
+			throw new RuntimeException("Properties are null", npe);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	void setProperties(Properties properties);
+	protected final void setProperties(Properties properties) {
+		this.properties = properties;
+	}
 
-	Properties getProperties();
+	public void afterRun() {}
 
-	void afterRun();
+	public Properties getProperties() {
+		return properties;
+	}
 }

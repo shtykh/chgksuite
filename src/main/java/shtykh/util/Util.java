@@ -1,6 +1,5 @@
 package shtykh.util;
 
-import org.apache.commons.io.FileExistsException;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.springframework.web.multipart.MultipartFile;
@@ -61,15 +60,18 @@ public class Util {
 		}
 	}
 
+	public static void copyFilesToDir(File sourceFolder, File destFolder, FileFilter filter) throws IOException {
+		for (File file : sourceFolder.listFiles(filter)) {
+			copyFileToDir(file, destFolder, file.getName());
+		}
+	}
+	
 	public static File copyFileToDir(File source, File destFolder) throws IOException {
 		return copyFileToDir(source, destFolder, source.getName());
 	}
 	
 	public static File copyFileToDir(File source, File destFolder, String destName) throws IOException {
-		File dest = new File(destFolder.getAbsolutePath() + "/" + destName);
-		if (dest.exists()) {
-			throw new FileExistsException(dest);
-		}
+		File dest = freeNameFile(destFolder, destName);
 		FileUtils.copyFile(source, dest);
 		return dest;
 	}
@@ -158,17 +160,22 @@ public class Util {
 								String serverLocation, String fileName) throws IOException {
 		File directory = new File(serverLocation);
 		directory.mkdirs();
-		File file = new File(directory + "/" + fileName);
-		int i = 0;
-		while (file.exists()) {
-			String[] split = fileName.split("\\.", 2);
-			file = new File(directory + "/" + split[0] + "(" + (i++) + ")" + "." + split[1]);
-		}
+		File file = freeNameFile(directory, fileName);
 		try(OutputStream outpuStream = new FileOutputStream(file)){
 			outpuStream.write(multipartFile.getBytes());
 			outpuStream.flush();
 			outpuStream.close();
 			return file;
 		}
+	}
+
+	private static File freeNameFile(File directory, String fileName) {
+		File file = new File(directory + "/" + fileName);
+		int i = 0;
+		while (file.exists()) {
+			String[] split = fileName.split("\\.", 2);
+			file = new File(directory + "/" + split[0] + "(" + (i++) + ")" + (split.length > 1 ? "." + split[1] : ""));
+		}
+		return file;
 	}
 }

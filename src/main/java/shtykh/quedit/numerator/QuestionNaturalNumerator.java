@@ -1,9 +1,11 @@
 package shtykh.quedit.numerator;
 
+import shtykh.quedit.question.Question;
+
 /**
  * Created by shtykh on 05/10/15.
  */
-public class QuestionNaturalNumerator extends NaturalNumerator implements QuestionNumerator {
+public class QuestionNaturalNumerator extends NaturalNumerator<Question> {
 	public QuestionNaturalNumerator() {
 		this(1);
 	}

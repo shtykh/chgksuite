@@ -9,7 +9,7 @@ import org.apache.log4j.Logger;
 import shtykh.quedit.numerator.NaturalNumerator;
 import shtykh.quedit.question.Question;
 import shtykh.rest.AuthorsCatalogue;
-import shtykh.rest.PacksController;
+import shtykh.rest.PackController;
 import shtykh.util.args.PropertyReader;
 import shtykh.util.catalogue.Catalogue;
 import shtykh.util.html.*;
@@ -28,7 +28,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import static java.lang.Boolean.parseBoolean;
 import static shtykh.util.Util.StringLogger;
@@ -44,8 +43,8 @@ public class PackView extends PropertyReader implements FormMaterial, UriGenerat
 	private static final Logger log = Logger.getLogger(PackView.class);
 	private final String id;
 	private final HtmlHelper html;
-	private final PacksController packs;
-	private PackInfo info;
+	private final PackController packs;
+	private Pack pack;
 
 	private ActionBuilder editQuestionAction;
 	private ActionBuilder editAuthorAction;
@@ -61,13 +60,13 @@ public class PackView extends PropertyReader implements FormMaterial, UriGenerat
 	private Map<String, String> hrefs;
 	private final AuthorsCatalogue authors;
 
-	public PackView(String id, HtmlHelper html, PacksController packs, AuthorsCatalogue authors, Properties properties, PackInfo packInfo) throws FileNotFoundException, URISyntaxException {
+	public PackView(String id, HtmlHelper html, PackController packs, AuthorsCatalogue authors, Pack pack) throws FileNotFoundException, URISyntaxException {
 		this.id = id;
 		this.html = html;
 		this.authors = authors;
-		this.info = packInfo;
+		this.pack = pack;
 		this.packs = packs;
-		setProperties(properties);
+		setProperties(packs.getProperties());
 		afterRun();
 		initActions();
 		initHrefs();
@@ -88,7 +87,7 @@ public class PackView extends PropertyReader implements FormMaterial, UriGenerat
 		initHref("text", "Полный текст в 4s");
 		initHref("split/getColor", "Разбить по цвету");
 		initHref("info", "Редактировать преамбулу");
-		initHref("", "К пакету " + info.getName());
+		initHref("", "К пакету " + pack.getName());
 		initHref("/authors/list", "Каталог персонажей");
 	}
 
@@ -112,13 +111,13 @@ public class PackView extends PropertyReader implements FormMaterial, UriGenerat
 	}
 
 	public String home() throws Exception {
-		info.refresh();
+		pack.refresh();
 		ColoredTableBuilder questionsTable;
 		URI uriNew;
 		TableBuilder hrefs;
 		try {
 			questionsTable = getQuestionTable();
-			Parameter<String> indexParameter = new Parameter<>("index", String.valueOf(info.size()));
+			Parameter<String> indexParameter = new Parameter<>("index", String.valueOf(pack.size()));
 			uriNew = uri("editForm", indexParameter);
 			hrefs = new TableBuilder(
 					getHref("uploadForm/4s"),
@@ -140,26 +139,26 @@ public class PackView extends PropertyReader implements FormMaterial, UriGenerat
 						hrefs.toString() + "<br>" +
 						getHref("info") +
 						questionsTable.toString() + "<br>" +
-						href(uriNew, "Добавить вопрос №" + info.getNumerator().getNumber(info.size())) + "<br>" +
+						href(uriNew, "Добавить вопрос №" + pack.getNumerator().getNumber(pack.size())) + "<br>" +
 						"";
-		return htmlPage(info.getName(), hrefHome, body);
+		return htmlPage(pack.getName(), hrefHome, body);
 	}
 
 	public String info() {
 		try {
-			info.refresh();
+			pack.refresh();
 		} catch (Exception e) {
 			return error(e);
 		}
 		String body =
-				info.to4s().replace("\n", "<br>") + "<br>" +
+				pack.to4s().replace("\n", "<br>") + "<br>" +
 						editPackAction.buildForm(this) + "<br>" +
 						addEditorAction.buildForm(authors) + "<br>" +
 						removeEditorAction.buildForm(authors) + "<br>" +
 						addTesterAction.buildForm(authors) + "<br>" +
 						removeTesterAction.buildForm(authors) + "<br>" +
 						getHref("/authors/list") + "<br>";
-		return htmlPage(info.getName(), getHref(""), body);
+		return htmlPage(pack.getName(), getHref(""), body);
 	}
 
 	private void initActions() {
@@ -176,7 +175,7 @@ public class PackView extends PropertyReader implements FormMaterial, UriGenerat
 			removeTesterAction = new ActionBuilder(address("removeTester"));
 			replaceQuestionAction = new ActionBuilder(address("copyTo"));
 			replaceQuestionAction
-					.addParam(PacksController.class, "packNames", "Переместить в пакет", select)
+					.addParam(PackController.class, "packNames", "Переместить в пакет", select)
 					.addParam(Question.class, "index", "Номер", hidden);
 			editQuestionAction
 					.addParam(Question.class, "number", "Номер", comment)
@@ -253,14 +252,14 @@ public class PackView extends PropertyReader implements FormMaterial, UriGenerat
 
 	public String editForm(int index) {
 		try {
-			Question question = info.get(index);
+			Question question = pack.get(index);
 			if (question == null) {
 				question = Question.mock();
-				question.newIndex(info.size());
+				question.newIndex(pack.size());
 			} else {
 				question.newIndex(index);
 			}
-			question.setNumber(info.getNumerator().getNumber(question.index()));
+			question.setNumber(pack.getNumerator().getNumber(question.index()));
 			question.setPacks(packs);
 			Parameter<String> parameter = new Parameter<>("index", String.valueOf(index));
 			String questionColor = question.getColor();
@@ -284,15 +283,15 @@ public class PackView extends PropertyReader implements FormMaterial, UriGenerat
 	}
 
 	public String editAuthorForm(int index) throws Exception {
-		Question question = info.get(index);
+		Question question = pack.get(index);
 		if (question == null) {
 			question = Question.mock();
-			question.newIndex(info.size());
+			question.newIndex(pack.size());
 		} else {
 			question.newIndex(index);
 		}
 		authors.refresh();
-		question.setNumber(info.getNumerator().getNumber(question.index()));
+		question.setNumber(pack.getNumerator().getNumber(question.index()));
 		question.setAuthors(authors);
 		String body = questionHtml(question) + "<br>"
 				+ editAuthorAction.buildForm(question)
@@ -367,14 +366,14 @@ public class PackView extends PropertyReader implements FormMaterial, UriGenerat
 
 	private ColumnTableBuilder<Question> getQuestionTable(QuestionTableBuilder.ColumnName... columnNames) throws URISyntaxException {
 		ColumnTableBuilder<Question> table = initQuestionTable(columnNames);
-		for (int i = 0; i < info.size(); i++) {
-			table.addRow(info.get(i));
+		for (int i = 0; i < pack.size(); i++) {
+			table.addRow(pack.get(i));
 		}
 		return table;
 	}
 
 	private QuestionTableBuilder initQuestionTable(QuestionTableBuilder.ColumnName... columnNames) {
-		return new QuestionTableBuilder(this, columnNames);
+		return new QuestionTableBuilder(pack, columnNames);
 	}
 
 	private String questionHtml(Question question) {

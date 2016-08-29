@@ -1,17 +1,17 @@
 package shtykh.quedit.question;
 
 import org.apache.commons.lang.StringUtils;
-import shtykh.rest.PackController;
-import shtykh.util.CSV;
 import shtykh.quedit._4s.FormParameterMaterial4s;
 import shtykh.quedit._4s.Type4s;
 import shtykh.quedit._4s._4Sable;
 import shtykh.quedit.author.Authored;
 import shtykh.quedit.author.MultiPerson;
 import shtykh.quedit.author.Person;
+import shtykh.quedit.numerator.Numerable;
 import shtykh.rest.AuthorsCatalogue;
+import shtykh.rest.PackController;
+import shtykh.util.CSV;
 import shtykh.util.Jsonable;
-import shtykh.util.catalogue.Indexed;
 import shtykh.util.html.TableRowMaterial;
 import shtykh.util.html.form.material.FormMaterial;
 import shtykh.util.html.form.material.FormParameterMaterial;
@@ -23,7 +23,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 /**
  * Created by shtykh on 01/10/15.
  */
-public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Indexed, TableRowMaterial {
+public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Numerable, TableRowMaterial {
 	private AuthorsCatalogue authors;
 	private PackController packs;
 	private FormParameterMaterial<String> unaudible;
