@@ -60,7 +60,7 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	}
 
 	@Override
-	public void refreshFile(File file) {
+	public void refreshFile(File file) throws Exception {
 		addPack(file.getName());
 	}
 
@@ -85,7 +85,7 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 				return error(e);
 			}
 			if (pack == null) {
-				return errorPage("Пакет " + id + " не был найден в папке " + folderPath());
+				return errorPage("Пакет " + id + " не был найден в папке " + folderName());
 			}
 		}
 		try {
@@ -97,16 +97,20 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 
 	@ResponseBody
 	@RequestMapping("packs")
-	public String all() throws Exception {
-		refresh();
-		TableBuilder table = new TableBuilder();
-		for (String id : packs.keySet()) {
-			URI editUri = htmlHelper.uriBuilder("/" + id).build();
-			table.addRow(href(editUri, packs.get(id).getName()));
+	public String all() {
+		try {
+			refresh();
+			TableBuilder table = new TableBuilder();
+			for (String id : packs.keySet()) {
+				URI editUri = htmlHelper.uriBuilder("/" + id).build();
+				table.addRow(href(editUri, packs.get(id).getName()));
+			}
+			URI addUri = htmlHelper.uriBuilder("/new").build();
+			table.addRow(href(addUri, "Новый пакет"));
+			return htmlPage("Пакеты", table.buildHtml());
+		} catch (Exception e) {
+			return error(e);
 		}
-		URI addUri = htmlHelper.uriBuilder("/new").build();
-		table.addRow(href(addUri, "Новый пакет"));
-		return htmlPage("Пакеты", table.buildHtml());
 	}
 
 	@ResponseBody
@@ -138,23 +142,19 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 		return getOr404(id, "info");
 	}
 
-	public void addPack(String key, Collection<Question> questions) {
+	public void addPack(String key, Collection<Question> questions) throws Exception {
 		Pack pack = addPack(key);
 		pack.addAll(questions);
 	}
 
-	private Pack addPack(String id) {
-		try{
-			Pack pack = packs.get(id);
-			if (pack == null) {
-				pack = new Pack(id, htmlHelper, authors, this);
-				pack.refresh();
-				packs.put(id, pack);
-			}
-			return pack;
-		} catch (Exception e) {
-			return null;
+	private Pack addPack(String id) throws Exception {
+		Pack pack = packs.get(id);
+		if (pack == null) {
+			pack = new Pack(id, htmlHelper, authors, this);
+			pack.refresh();
+			packs.put(id, pack);
 		}
+		return pack;
 	}
 
 	@ResponseBody

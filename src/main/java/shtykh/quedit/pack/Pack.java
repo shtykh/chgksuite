@@ -19,7 +19,6 @@ import shtykh.rest.PackController;
 import shtykh.util.Jsonable;
 import shtykh.util.StringSerializer;
 import shtykh.util.Util;
-import shtykh.util.catalogue.ListCatalogue;
 import shtykh.util.html.HtmlHelper;
 import shtykh.util.html.form.material.FormMaterial;
 
@@ -30,6 +29,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
+import java.util.Collection;
 
 import static java.lang.Boolean.parseBoolean;
 import static shtykh.util.Util.*;
@@ -39,53 +39,55 @@ import static shtykh.util.html.form.param.FormParameterType.file;
 /**
  * Created by shtykh on 01/10/15.
  */
-public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sable, Authored {
+public class Pack implements FormMaterial, _4Sable, Authored {
 	private static final Logger log = Logger.getLogger(Pack.class);
 	private final String id;
 	private final AuthorsCatalogue authors;
 	private final PackController packs;
+	private final String folderName;
 	private PackInfo info;
+	private Questions questions;
 	private PackView view;
 
 	public Pack(String id, HtmlHelper html, AuthorsCatalogue authors, PackController packs) throws FileNotFoundException, URISyntaxException {
-		super(Question.class);
 		this.id = id;
 		this.authors = authors;
 		this.packs = packs;
-		setProperties(packs.getProperties());
-		afterRun();
+		folderName = packs.getProperty("packs") + "/" + id;
 		initInfo();
+		this.questions = new Questions(packs.getProperties(), id, info);
 		view = new PackView(id, html, packs, authors, this);
 	}
 
-	@Override
 	protected String folderName() {
-		return getProperty("packs") + "/" + id;
+		return folderName;
 	}
 
 	public String home() throws Exception {
 		refresh();
 		return view.home(getName(), size(), getNumerator().getNumber(size()), getAll());
 	}
-	
-	public String info() {
+
+	private Collection<Question> getAll() {
+		return questions.getAll();
+	}
+
+	private int size() {
+		return questions.size();
+	}
+
+	public String info() throws Exception {
 		refresh();
 		return view.infoPage(info);
 	}
-
-	@Override
-	protected String folderNameKey() {
-		return "packs";
-	}
-
-	@Override
+	
 	public void refresh() throws Exception {
-		super.refresh();
+		questions.refresh();
 		this.info = Jsonable.fromJson(Util.read(infoPath()), PackInfo.class);
 	}
 
 	private String infoPath() {
-		return folderPath() + ".info";
+		return folderName() + ".info";
 	}
 
 	public String editPack(
@@ -110,8 +112,8 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 
 	public String upload_file(MultipartFile multipartFile) {
 		try{
-			String folderPath = folder + "/uploads";
-			File file = saveFile(multipartFile, folderPath, "file");
+			String folderName = folderName() + "/uploads";
+			File file = saveFile(multipartFile, folderName, "file");
 			return "File saved to server location : " + file;
 		} catch (Exception e) {
 			return error(e);
@@ -119,10 +121,10 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	public String upload_4s(MultipartFile multipartFile) {
-		String folderPath = folder + "/import";
+		String folderName = folderName() + "/import";
 		try {
-			File timestampFolder = timestampFolder(folderPath);
-			clearFolder();
+			File timestampFolder = timestampFolder(folderName);
+			questions.clearFolder();
 			File file = saveFile(multipartFile, timestampFolder.getAbsolutePath(), id + ".docx");
 			from4sFile(file);
 			return home();
@@ -132,25 +134,25 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	private void from4sFile(File file) throws Exception {
-		Parser4s parser4s = new Parser4s(file.getAbsolutePath(), folderPath() + "/pics");
+		Parser4s parser4s = new Parser4s(file.getAbsolutePath(), folderName() + "/pics");
 		this.fromParser(parser4s);
 		file.delete();
 	}
 
 	public String upload_docx(MultipartFile multipartFile) {
-		String folderPath = folder + "/import";
+		String folderName = folderName() + "/import";
 		try {
-			File timestampFolder = timestampFolder(folderPath);
-			clearFolder();
+			File timestampFolder = timestampFolder(folderName);
+			questions.clearFolder();
 			File fileDocx = saveFile(multipartFile, timestampFolder.getAbsolutePath(), id + ".docx");
-			StringLogger logs = new StringLogger(log, parseBoolean(getProperty("debug")));
+			StringLogger logs = new StringLogger(log, parseBoolean(questions.getProperty("debug")));
 			logs.info("File saved to server location : " + file);
 			String[] cmd = chgkSuiteCmd("parse", fileDocx.getAbsolutePath());
 			if (call(logs, cmd) == 0) {
 				File file4s = new File(timestampFolder.getAbsoluteFile() + "/" + id + ".4s");
 				copyFilesToDir(
 						timestampFolder, 
-						folder(folder.getAbsolutePath(), "/pics"), 
+						folder(folderName(), "/pics"), 
 						new SuffixFileFilter(new String[]{"png", "jpg", "jpeg"})); // todo put in a property
 				from4sFile(file4s);
 				return home();
@@ -165,9 +167,9 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	public String upload_pic(MultipartFile multipartFile) {
-		String folderPath = folder + "/pics";
+		String folderName = folderName() + "/pics";
 		try {
-			File folder = new File(folderPath);
+			File folder = new File(folderName);
 			File file = saveFile(multipartFile, folder.getAbsolutePath(), multipartFile.getName());
 			return view.upload_pic_page(file, getAll());
 		} catch (Exception e) {
@@ -185,6 +187,10 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		authors.addAll(parser4s.getPersons());
 	}
 
+	public void addAll(Collection<Question> questions) {
+		this.questions.addAll(questions);
+	}
+
 	public String editForm(int index) {
 		return view.editForm(getRefreshed(index));
 	}
@@ -196,7 +202,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	
 	private Question getRefreshed(int index) {
 		try{
-			Question question = super.get(index);
+			Question question = questions.get(index);
 			if (question == null) {
 				question = Question.mock();
 				question.newIndex(size());
@@ -218,14 +224,14 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	public String removeMethod(int index) throws Exception {
-		super.remove(index);
+		questions.remove(index);
 		return home();
 	}
 
 	public String addPicture(String number, String path) {
 		try{
 			int index = getNumerator().getIndex(number);
-			Question q = get(index);
+			Question q = questions.get(index);
 			q.setUnaudible(q.getUnaudible() + "\nРаздаточный материал: (img " + path + ")");
 			return editForm(index);
 		} catch (Exception e) {
@@ -237,17 +243,17 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		if (packNames == null) {
 			packNames = "zapas";
 		}
-		super.copyTo(index, packNames);
+		questions.copyTo(index, packNames);
 		return editForm(index);
 	}
 
 	public String upMethod( int index) throws Exception {
-		super.up(index);
+		questions.up(index);
 		return home();
 	}
 
 	public String downMethod( int index) throws Exception {
-		super.down(index);
+		questions.down(index);
 		return home();
 	}
 
@@ -262,7 +268,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			 String comment,
 			 String sources
 	) throws Exception {
-		Question question = get(index);
+		Question question = questions.get(index);
 		if (question == null) {
 			question = new Question();
 		}
@@ -284,7 +290,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			 String author
 	) {
 		try {
-			Question question = get(index);
+			Question question = questions.get(index);
 			question.setAuthors(authors);
 			question.addAuthor(author);
 			add(index, question);
@@ -319,7 +325,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 				}
 				return home();
 			}
-			Question question = get(index);
+			Question question = getRefreshed(index);
 			((MultiPerson)question.getAuthor()).getPersonList().remove(authors.get(author));
 			add(index, question);
 			return editForm(index);
@@ -355,7 +361,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 		StringSerializer<Color> serializer = StringSerializer.getForClass(Color.class);
 		colorHex = serializer.toString(color);
-		Question question = get(index);
+		Question question = getRefreshed(index);
 		question.setColor(colorHex);
 		add(index, question);
 		return home();
@@ -388,7 +394,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		StringLogger logs = new StringLogger(log, debug);
 		String text4s = to4s();
 		logs.debug("text generated in 4s");
-		File timestampFolder = timestampFolder(folder.getAbsolutePath());
+		File timestampFolder = timestampFolder(folderName());
 		logs.debug(timestampFolder + " is created");
 		String name4sFile = timestampFolder.getAbsoluteFile() + "/" + id + ".4s";
 		write(new File(name4sFile), text4s);
@@ -428,22 +434,9 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		}
 	}
 
-	@Override
 	public void add(Integer index, Question item) {
-		super.add(index, item);
+		questions.add(index, item);
 		getNumerator().number(index, item);
-	}
-
-	@Override
-	public Numerator<Question> getNumerator() {
-		return info.getNumerator();
-	}
-
-	@Override
-	protected void swap(int key, int key2) {
-		super.swap(key, key2);
-		getNumerator().number(key, get(key2));
-		getNumerator().number(key2, get(key));
 	}
 
 	public String addEditor(String name) throws Exception {
@@ -484,8 +477,8 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 
 	private String[] chgkSuiteCmd(String... parameters) throws FileNotFoundException {
 		String[] cmd = new String[parameters.length + 2];
-		cmd[0] = getProperty("python");
-		cmd[1] = getProperty("chgksuite");
+		cmd[0] = questions.getProperty("python");
+		cmd[1] = questions.getProperty("chgksuite");
 		for (int i = 0; i < parameters.length; i++) {
 			cmd[i + 2] = parameters[i];
 		}
@@ -496,7 +489,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	public String to4s() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(info.to4s()).append('\n');
-		for (Question question : super.getAll()) {
+		for (Question question : questions.getAll()) {
 			getNumerator().renumber(question);
 			sb.append(question.to4s()).append('\n');
 		}
@@ -557,5 +550,9 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 
 	public PackInfo getInfo() {
 		return info;
+	}
+
+	public Numerator<Question> getNumerator() {
+		return questions.getNumerator();
 	}
 }
