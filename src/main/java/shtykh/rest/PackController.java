@@ -19,7 +19,6 @@ import shtykh.util.html.form.material.FormParameterMaterial;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -39,20 +38,15 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	private static final Logger log = LoggerFactory.getLogger(PackController.class);
 	protected FormParameterMaterial<CSV> packNames = new FormParameterMaterial<>(new CSV(""), CSV.class);
 	private Map<String, Pack> packs = new TreeMap<>();
-
+	
+	@Autowired
+	private AuthorsCatalogue authors;
 	private HtmlHelper htmlHelper;
 	
 	@Autowired
 	public void setHtmlHelper(HtmlHelper htmlHelper) throws URISyntaxException {
 		this.htmlHelper = htmlHelper;
 		log.info("Check me out at " + uri(""));
-	}
-	
-	@Autowired
-	private AuthorsCatalogue authors;
-
-	public PackController() throws FileNotFoundException {
-		super();
 	}
 
 	@Override
@@ -208,6 +202,11 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	@ResponseBody
 	@RequestMapping("{id}/editForm")
 	public String editForm(@PathVariable("id") String id, @RequestParam("index") int index) {
+		try {
+			refreshNames();
+		} catch (Exception e) {
+			return error(e);
+		}
 		return getOr404(id, "editForm", index);
 	}
 
@@ -392,16 +391,4 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	public void refreshNames() throws Exception {
 		packNames.set(new CSV(listFileNames()));
 	}
-
-//	public static void main(String[] args) throws IOException, URISyntaxException {
-//		PackController packController = new PackController();
-//		packController.htmlHelper = new HtmlHelper();
-//		packController.authors = new AuthorsCatalogue();
-//		packController.refresh();
-//		Pack pack = packController.packs.get("rudn_cup");
-//		pack.editPack("Кубок РУДН", "Кубок РУДН", "20 октября 2015", "", 1, "0\n00\n000");
-//		for (String s : pack.info().split("<br>")) {
-//			System.out.println(s + "<br>");
-//		}
-//	}
 }

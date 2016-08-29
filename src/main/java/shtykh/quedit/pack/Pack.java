@@ -2,7 +2,6 @@ package shtykh.quedit.pack;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.sun.research.ws.wadl.HTTPMethods;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -21,14 +20,8 @@ import shtykh.util.Jsonable;
 import shtykh.util.StringSerializer;
 import shtykh.util.Util;
 import shtykh.util.catalogue.ListCatalogue;
-import shtykh.util.html.ColumnTableBuilder;
 import shtykh.util.html.HtmlHelper;
-import shtykh.util.html.QuestionTableBuilder;
-import shtykh.util.html.UriGenerator;
-import shtykh.util.html.form.build.FormBuilder;
 import shtykh.util.html.form.material.FormMaterial;
-import shtykh.util.html.form.param.FormParameter;
-import shtykh.util.html.form.param.FormParameterSignature;
 
 import javax.ws.rs.core.Response;
 import java.awt.*;
@@ -41,16 +34,14 @@ import java.net.URISyntaxException;
 import static java.lang.Boolean.parseBoolean;
 import static shtykh.util.Util.*;
 import static shtykh.util.html.HtmlHelper.*;
-import static shtykh.util.html.form.build.FormBuilder.buildUploadForm;
-import static shtykh.util.html.form.param.FormParameterType.*;
+import static shtykh.util.html.form.param.FormParameterType.file;
 
 /**
  * Created by shtykh on 01/10/15.
  */
-public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sable, Authored, UriGenerator {
+public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sable, Authored {
 	private static final Logger log = Logger.getLogger(Pack.class);
 	private final String id;
-	private final HtmlHelper html;
 	private final AuthorsCatalogue authors;
 	private final PackController packs;
 	private PackInfo info;
@@ -59,7 +50,6 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	public Pack(String id, HtmlHelper html, AuthorsCatalogue authors, PackController packs) throws FileNotFoundException, URISyntaxException {
 		super(Question.class);
 		this.id = id;
-		this.html = html;
 		this.authors = authors;
 		this.packs = packs;
 		setProperties(packs.getProperties());
@@ -74,11 +64,13 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	public String home() throws Exception {
-		return view.home();
+		refresh();
+		return view.home(getName(), size(), getNumerator().getNumber(size()), getAll());
 	}
 	
 	public String info() {
-		return view.info();
+		refresh();
+		return view.infoPage(info);
 	}
 
 	@Override
@@ -87,12 +79,8 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	@Override
-	public void refresh() {
-		try {
-			super.refresh();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+	public void refresh() throws Exception {
+		super.refresh();
 		this.info = Jsonable.fromJson(Util.read(infoPath()), PackInfo.class);
 	}
 
@@ -117,15 +105,14 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	public String uploadForm(String what) throws URISyntaxException {
-		return htmlPage("Загрузите файл", buildUploadForm(address("upload" + "/" + what)));
+		return view.uploadForm(what);
 	}
 
 	public String upload_file(MultipartFile multipartFile) {
 		try{
 			String folderPath = folder + "/uploads";
 			File file = saveFile(multipartFile, folderPath, "file");
-			String output = "File saved to server location : " + file;
-			return output;
+			return "File saved to server location : " + file;
 		} catch (Exception e) {
 			return error(e);
 		}
@@ -161,11 +148,16 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			String[] cmd = chgkSuiteCmd("parse", fileDocx.getAbsolutePath());
 			if (call(logs, cmd) == 0) {
 				File file4s = new File(timestampFolder.getAbsoluteFile() + "/" + id + ".4s");
-				copyFilesToDir(timestampFolder, folder(folder.getAbsolutePath(), "/pics"), new SuffixFileFilter(new String[]{"png", "jpg", "jpeg"}));
+				copyFilesToDir(
+						timestampFolder, 
+						folder(folder.getAbsolutePath(), "/pics"), 
+						new SuffixFileFilter(new String[]{"png", "jpg", "jpeg"})); // todo put in a property
 				from4sFile(file4s);
 				return home();
 			} else {
-				return htmlPage("Загрузка из " + multipartFile.getOriginalFilename(), logs.toString().replace("\n", "<br>"));
+				return htmlPage(
+						"Загрузка из " + multipartFile.getOriginalFilename(), 
+						logs.toString().replace("\n", "<br>"));
 			}
 		} catch (Exception e) {
 			return error(e);
@@ -177,16 +169,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		try {
 			File folder = new File(folderPath);
 			File file = saveFile(multipartFile, folder.getAbsolutePath(), multipartFile.getName());
-			FormBuilder formBuilder = new FormBuilder(address("addPicture"));
-			formBuilder
-					.addMember(new FormParameter<>(
-							new FormParameterSignature("path", hidden), file.getAbsolutePath(), String.class))
-					.addMember(new FormParameter<>(
-							new FormParameterSignature("number", "Добавить раздаточный материал к вопросу номер", text), "", String.class));
-			return html.listResponce(
-					"Картинка загружена", 
-					formBuilder.build(HTTPMethods.GET), 
-					getQuestionTable(QuestionTableBuilder.ColumnName.NUMBER, QuestionTableBuilder.ColumnName.ANSWER).buildHtml());
+			return view.upload_pic_page(file, getAll());
 		} catch (Exception e) {
 			return error(e);
 		}
@@ -198,21 +181,39 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			info.setName(id);
 		}
 		info.save(infoPath());
-		for (Question question : parser4s.getQuestions()) {
-			add(question);
-		}
+		addAll(parser4s.getQuestions());
 		authors.addAll(parser4s.getPersons());
 	}
 
 	public String editForm(int index) {
-		return view.editForm(index);
+		return view.editForm(getRefreshed(index));
 	}
 
 	public String editAuthorForm(int index) throws Exception {
-		return view.editAuthorForm(index);
+		Question question = getRefreshed(index);
+		return view.editAuthorForm(question);
+	}
+	
+	private Question getRefreshed(int index) {
+		try{
+			Question question = super.get(index);
+			if (question == null) {
+				question = Question.mock();
+				question.newIndex(size());
+			} else {
+				question.newIndex(index);
+			}
+			authors.refresh();
+			getNumerator().renumber(question);
+			question.setAuthors(authors);
+			return question;
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	public String editCommonAuthorForm() throws Exception {
+		authors.refresh();
 		return view.editCommonAuthorForm();
 	}
 
@@ -372,7 +373,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			for (String key : map.keySet()) {
 				packs.addPack(id + "_" + key, map.get(key));
 			}
-			return home();
+			return packs.all();
 		} catch (Exception e) {
 			return errorPage("Не удалось разбить " + id + " на подпакеты по признаку " + methodName);
 		}
@@ -392,11 +393,9 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		String name4sFile = timestampFolder.getAbsoluteFile() + "/" + id + ".4s";
 		write(new File(name4sFile), text4s);
 		logs.debug("4s was written to " + name4sFile);
-		//File template = copyFileToDir(propertyReader.get(("quedit.properties", "templatedocx"), timestampFolder);
-		//logs.debug(template + " was created");
 		String[] cmd = chgkSuiteCmd("compose", outFormat, name4sFile, "--nospoilers");
 		int result = call(logs, cmd);
-		return view.compose(result, logs, timestampFolder, outFormat);
+		return view.compose_result_page(result, logs, timestampFolder, outFormat);
 	}
 	
 	private static File timestampFolder(String folder) {
@@ -415,24 +414,6 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		Response.ResponseBuilder responseBuilder = Response.ok(file);
 		responseBuilder.header("Content-Disposition", "attachment; filename=\"" + id + ".docx\"");
 		return responseBuilder.build();
-	}
-	
-	@Override
-	public String base(){
-		return "/" + id;
-	}
-	
-	@Override
-	public HtmlHelper htmlHelper() {
-		return html;
-	}
-
-	private ColumnTableBuilder<Question> getQuestionTable(QuestionTableBuilder.ColumnName... columnNames) throws URISyntaxException {
-		ColumnTableBuilder<Question> table = new QuestionTableBuilder(this, columnNames);
-		for (int i = 0; i < size(); i++) {
-			table.addRow(get(i));
-		}
-		return table;
 	}
 
 	private void initInfo() {
@@ -572,5 +553,9 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	public void setNumerator(QuestionNaturalNumerator numerator) {
 		info.setNumerator(numerator);
 		info.save(infoPath());
+	}
+
+	public PackInfo getInfo() {
+		return info;
 	}
 }

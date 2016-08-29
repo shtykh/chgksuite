@@ -9,7 +9,6 @@ import shtykh.quedit.author.MultiPerson;
 import shtykh.quedit.author.Person;
 import shtykh.quedit.numerator.Numerable;
 import shtykh.rest.AuthorsCatalogue;
-import shtykh.rest.PackController;
 import shtykh.util.CSV;
 import shtykh.util.Jsonable;
 import shtykh.util.html.TableRowMaterial;
@@ -25,7 +24,6 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  */
 public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Numerable, TableRowMaterial {
 	private AuthorsCatalogue authors;
-	private PackController packs;
 	private FormParameterMaterial<String> unaudible;
 	private FormParameterMaterial<Integer> index;
 	private FormParameterMaterial4s number;
@@ -127,15 +125,6 @@ public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Nume
 			}
 	}
 
-//	public static void main(String[] args) {
-//		Question q = mock();
-//		System.out.println(q);
-//		String json = q.toJson();
-//		System.out.println(json);
-//		q = Jsonable.fromJson(json, Question.class);
-//		System.out.println(q);
-//	}
-
 	public static Question mock() {
 		return new Question();
 	}
@@ -211,11 +200,6 @@ public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Nume
 	public void setAuthors(AuthorsCatalogue authors) throws Exception {
 		this.authors = authors;
 		authors.refresh();
-	}
-
-	public void setPacks(PackController packs) throws Exception {
-		this.packs = packs;
-		packs.refreshNames();
 	}
 
 	public void setColor(String colorhex) {

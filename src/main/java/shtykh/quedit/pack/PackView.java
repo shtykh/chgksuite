@@ -20,18 +20,15 @@ import shtykh.util.html.form.param.FormParameter;
 import shtykh.util.html.form.param.FormParameterSignature;
 import shtykh.util.html.param.Parameter;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collection;
 
 import static java.lang.Boolean.parseBoolean;
 import static shtykh.util.Util.StringLogger;
-import static shtykh.util.Util.timestamp;
 import static shtykh.util.html.HtmlHelper.*;
 import static shtykh.util.html.form.build.FormBuilder.buildUploadForm;
 import static shtykh.util.html.form.param.FormParameterType.*;
@@ -39,12 +36,12 @@ import static shtykh.util.html.form.param.FormParameterType.*;
 /**
  * Created by shtykh on 01/10/15.
  */
-public class PackView extends PropertyReader implements FormMaterial, UriGenerator {
+public class PackView extends PropertyReader implements FormMaterial {
 	private static final Logger log = Logger.getLogger(PackView.class);
 	private final String id;
-	private final HtmlHelper html;
-	private final PackController packs;
-	private Pack pack;
+	private HrefHelper hrefs;
+	private final AuthorsCatalogue authors;
+	private java.net.URI backUri;
 
 	private ActionBuilder editQuestionAction;
 	private ActionBuilder editAuthorAction;
@@ -57,123 +54,94 @@ public class PackView extends PropertyReader implements FormMaterial, UriGenerat
 	private ActionBuilder removeEditorAction;
 	private ActionBuilder removeTesterAction;
 	private ActionBuilder replaceQuestionAction;
-	private Map<String, String> hrefs;
-	private final AuthorsCatalogue authors;
 
 	public PackView(String id, HtmlHelper html, PackController packs, AuthorsCatalogue authors, Pack pack) throws FileNotFoundException, URISyntaxException {
 		this.id = id;
-		this.html = html;
 		this.authors = authors;
-		this.pack = pack;
-		this.packs = packs;
+		this.backUri = packs.uri("");
 		setProperties(packs.getProperties());
 		afterRun();
+		hrefs = new HrefHelper("/" + id, html);
 		initActions();
-		initHrefs();
+		initHrefs(pack.getName());
 	}
 
-	private void initHrefs() throws URISyntaxException {
-		hrefs = new HashMap<>();
+	private void initHrefs(String packName) throws URISyntaxException {
 		String outFormat = getProperty("outFormat");
 		boolean debug = parseBoolean(getProperty("debug"));
-		initHref("compose", "Сгенерировать пакет",
+		hrefs.put("compose", "Сгенерировать пакет",
 				new Parameter<>("outFormat", outFormat),
 				new Parameter<>("debug", debug));
-		initHref("uploadForm/4s", "Импорт пакета из 4s");
-		initHref("uploadForm/docx", "Импорт пакета из docx");
-		initHref("uploadFormTrello", "Импорт пакета из trello");
-		initHref("uploadForm/pic", "Загрузить картинку");
-		initHref("editCommonAuthorForm", "Автор всех вопросов");
-		initHref("text", "Полный текст в 4s");
-		initHref("split/getColor", "Разбить по цвету");
-		initHref("info", "Редактировать преамбулу");
-		initHref("", "К пакету " + pack.getName());
-		initHref("/authors/list", "Каталог персонажей");
+		hrefs.put("uploadForm/4s", "Импорт пакета из 4s");
+		hrefs.put("uploadForm/docx", "Импорт пакета из docx");
+		hrefs.put("uploadFormTrello", "Импорт пакета из trello");
+		hrefs.put("uploadForm/pic", "Загрузить картинку");
+		hrefs.put("editCommonAuthorForm", "Автор всех вопросов");
+		hrefs.put("text", "Полный текст в 4s");
+		hrefs.put("split/getColor", "Разбить по цвету");
+		hrefs.put("info", "Редактировать преамбулу");
+		hrefs.put("", "К пакету " + packName);
+		hrefs.put("/authors/list", "Каталог персонажей");
 	}
 
-	public void initHref(String method, String name, Parameter... parameters) throws URISyntaxException {
-		URI uri = uriBuilder(method, parameters).build();
-		String href = href(uri, name);
-		hrefs.put(method, href);
-	}
-
-	public void initHref(URI uri, String name) throws URISyntaxException {
-		String href = href(uri, name);
-		hrefs.put(uri.toString(), href);
-	}
-
-	public String getHref(String method) {
-		return hrefs.get(method);
-	}
-
-	public String getHref(URI uri) {
-		return hrefs.get(uri.toString());
-	}
-
-	public String home() throws Exception {
-		pack.refresh();
+	public String home(String name, int size, String nextNumber, Collection<Question> questions) throws Exception {
 		ColoredTableBuilder questionsTable;
 		URI uriNew;
-		TableBuilder hrefs;
+		TableBuilder hrefTable;
 		try {
-			questionsTable = getQuestionTable();
-			Parameter<String> indexParameter = new Parameter<>("index", String.valueOf(pack.size()));
-			uriNew = uri("editForm", indexParameter);
-			hrefs = new TableBuilder(
-					getHref("uploadForm/4s"),
-					getHref("uploadForm/docx"),
-					getHref("uploadFormTrello"),
-					getHref("uploadForm/pic"),
-					getHref("editCommonAuthorForm")
+			questionsTable = getQuestionTable(questions);
+			Parameter<String> indexParameter = new Parameter<>("index", String.valueOf(size));
+			uriNew = hrefs.uri("editForm", indexParameter);
+			hrefTable = new TableBuilder(
+					hrefs.get("uploadForm/4s"),
+					hrefs.get("uploadForm/docx"),
+					hrefs.get("uploadFormTrello"),
+					hrefs.get("uploadForm/pic"),
+					hrefs.get("editCommonAuthorForm")
 			);
-			hrefs.addRow(
-					getHref("text"),
-					getHref("compose"),
-					getHref("split/getColor"));
+			hrefTable.addRow(
+					hrefs.get("text"),
+					hrefs.get("compose"),
+					hrefs.get("split/getColor"));
 		} catch (Exception e) {
 			return error(e);
 		}
-		String hrefHome = getHref("");
+		String hrefHome = hrefs.get("");
 		String body =
-				href(packs.uri(""), "К списку пакетов") +
-						hrefs.toString() + "<br>" +
-						getHref("info") +
+				href(backUri, "К списку пакетов") +
+						hrefTable.toString() + "<br>" +
+						hrefs.get("info") +
 						questionsTable.toString() + "<br>" +
-						href(uriNew, "Добавить вопрос №" + pack.getNumerator().getNumber(pack.size())) + "<br>" +
+						href(uriNew, "Добавить вопрос №" + nextNumber) + "<br>" +
 						"";
-		return htmlPage(pack.getName(), hrefHome, body);
+		return htmlPage(name, hrefHome, body);
 	}
 
-	public String info() {
-		try {
-			pack.refresh();
-		} catch (Exception e) {
-			return error(e);
-		}
+	public String infoPage(PackInfo info) {
 		String body =
-				pack.to4s().replace("\n", "<br>") + "<br>" +
+				info.to4s().replace("\n", "<br>") + "<br>" +
 						editPackAction.buildForm(this) + "<br>" +
 						addEditorAction.buildForm(authors) + "<br>" +
 						removeEditorAction.buildForm(authors) + "<br>" +
 						addTesterAction.buildForm(authors) + "<br>" +
 						removeTesterAction.buildForm(authors) + "<br>" +
-						getHref("/authors/list") + "<br>";
-		return htmlPage(pack.getName(), getHref(""), body);
+						hrefs.get("/authors/list") + "<br>";
+		return htmlPage(info.getName(), hrefs.get(""), body);
 	}
 
 	private void initActions() {
 		try {
-			editQuestionAction = new ActionBuilder(address("edit"));
-			editAuthorAction = new ActionBuilder(address("editAuthor"));
-			removeAuthorAction = new ActionBuilder(address("removeAuthor"));
-			editCommonAuthorAction = new ActionBuilder(address("editCommonAuthor"));
-			removeCommonAuthorAction = new ActionBuilder(address("removeCommonAuthor"));
-			editPackAction = new ActionBuilder(address("editPack"));
-			addEditorAction = new ActionBuilder(address("addEditor"));
-			addTesterAction = new ActionBuilder(address("addTester"));
-			removeEditorAction = new ActionBuilder(address("removeEditor"));
-			removeTesterAction = new ActionBuilder(address("removeTester"));
-			replaceQuestionAction = new ActionBuilder(address("copyTo"));
+			editQuestionAction = new ActionBuilder(hrefs.address("edit"));
+			editAuthorAction = new ActionBuilder(hrefs.address("editAuthor"));
+			removeAuthorAction = new ActionBuilder(hrefs.address("removeAuthor"));
+			editCommonAuthorAction = new ActionBuilder(hrefs.address("editCommonAuthor"));
+			removeCommonAuthorAction = new ActionBuilder(hrefs.address("removeCommonAuthor"));
+			editPackAction = new ActionBuilder(hrefs.address("editPack"));
+			addEditorAction = new ActionBuilder(hrefs.address("addEditor"));
+			addTesterAction = new ActionBuilder(hrefs.address("addTester"));
+			removeEditorAction = new ActionBuilder(hrefs.address("removeEditor"));
+			removeTesterAction = new ActionBuilder(hrefs.address("removeTester"));
+			replaceQuestionAction = new ActionBuilder(hrefs.address("copyTo"));
 			replaceQuestionAction
 					.addParam(PackController.class, "packNames", "Переместить в пакет", select)
 					.addParam(Question.class, "index", "Номер", hidden);
@@ -230,50 +198,42 @@ public class PackView extends PropertyReader implements FormMaterial, UriGenerat
 
 
 	public String uploadForm(String what) throws URISyntaxException {
-		return htmlPage("Загрузите файл", buildUploadForm(address("upload" + "/" + what)));
+		return htmlPage("Загрузите файл", buildUploadForm(hrefs.address("upload" + "/" + what)));
 	}
 
-	public String upload_pic_page(File file) {
+	public String upload_pic_page(File file, Collection<Question> questions) {
 		try {
-			FormBuilder formBuilder = new FormBuilder(address("addPicture"));
+			FormBuilder formBuilder = new FormBuilder(hrefs.address("addPicture"));
 			formBuilder
 					.addMember(new FormParameter<>(
 							new FormParameterSignature("path", hidden), file.getAbsolutePath(), String.class))
 					.addMember(new FormParameter<>(
 							new FormParameterSignature("number", "Добавить раздаточный материал к вопросу номер", text), "", String.class));
-			return html.listResponce(
+			return hrefs.listResponce(
 					"Картинка загружена",
 					formBuilder.build(HTTPMethods.GET),
-					getQuestionTable(QuestionTableBuilder.ColumnName.NUMBER, QuestionTableBuilder.ColumnName.ANSWER).buildHtml());
+					getQuestionTable(questions, QuestionTableBuilder.ColumnName.NUMBER, QuestionTableBuilder.ColumnName.ANSWER).buildHtml());
 		} catch (Exception e) {
 			return error(e);
 		}
 	}
 
-	public String editForm(int index) {
+	public String editForm(Question question) {
 		try {
-			Question question = pack.get(index);
-			if (question == null) {
-				question = Question.mock();
-				question.newIndex(pack.size());
-			} else {
-				question.newIndex(index);
-			}
-			question.setNumber(pack.getNumerator().getNumber(question.index()));
-			question.setPacks(packs);
+			int index = question.index();
 			Parameter<String> parameter = new Parameter<>("index", String.valueOf(index));
 			String questionColor = question.getColor();
 			ColoredTableBuilder navigation = new ColoredTableBuilder();
-			URI uriColor = uri("nextColor", parameter, new Parameter<>("color", questionColor));
+			URI uriColor = hrefs.uri("nextColor", parameter, new Parameter<>("color", questionColor));
 			navigation.addRow(
-					href(uri("editForm", new Parameter<>("index", index - 1)), "Назад"),
-					getHref(""),
+					href(hrefs.uri("editForm", new Parameter<>("index", index - 1)), "Назад"),
+					hrefs.get(""),
 					href(uriColor, "Сменить цвет"),
-					href(uri("editForm", new Parameter<>("index", index + 1)), "Вперёд"));
+					href(hrefs.uri("editForm", new Parameter<>("index", index + 1)), "Вперёд"));
 			navigation.addColor(0, 2, questionColor);
 			String body = navigation
 					+ questionHtml(question)
-					+ href(uri("editAuthorForm", new Parameter<>("index", index)), "Редактировать авторов")
+					+ href(hrefs.uri("editAuthorForm", new Parameter<>("index", index)), "Редактировать авторов")
 					+ replaceQuestionAction.buildForm(question)
 					+ editQuestionAction.buildForm(question);
 			return htmlPage("Отредактируйте вопрос", body);
@@ -282,48 +242,35 @@ public class PackView extends PropertyReader implements FormMaterial, UriGenerat
 		}
 	}
 
-	public String editAuthorForm(int index) throws Exception {
-		Question question = pack.get(index);
-		if (question == null) {
-			question = Question.mock();
-			question.newIndex(pack.size());
-		} else {
-			question.newIndex(index);
-		}
-		authors.refresh();
-		question.setNumber(pack.getNumerator().getNumber(question.index()));
-		question.setAuthors(authors);
+	public String editAuthorForm(Question question) throws Exception {
 		String body = questionHtml(question) + "<br>"
 				+ editAuthorAction.buildForm(question)
 				+ removeAuthorAction.buildForm(question)
-				+ getHref("/authors/list");
+				+ hrefs.get("/authors/list");
 		return htmlPage("Добавить автора", body);
 	}
 
 	public String editCommonAuthorForm() throws Exception {
-		authors.refresh();
-		String body = "Редоктировать автора ко всем вопросам " + id + "<br>"
+		String body = "Редактировать автора ко всем вопросам " + id + "<br>"
 				+ editCommonAuthorAction.buildForm(authors)
 				+ removeCommonAuthorAction.buildForm(authors)
-				+ getHref("/authors/list");
+				+ hrefs.get("/authors/list");
 		return htmlPage("Автор всех вопросов", body);
 	}
 
-	public String compose(int result, StringLogger logs, File timestampFolder, String outFormat) throws IOException {
+	public String compose_result_page(int result, StringLogger logs, File timestampFolder, String outFormat) throws IOException {
 		if (result == 0) {
 			logs.info("Файл формата " + outFormat + " успешно создан в папке " + timestampFolder);
 			if (outFormat.equals("docx")) {
 				String path = getPath(timestampFolder, outFormat);
 				try {
-					URI downloadHref = uri("download/docx", new Parameter<>("path", path));
+					URI downloadHref = hrefs.uri("download/docx", new Parameter<>("path", path));
 					logs.info(href(downloadHref, "Скачать"));
 				} catch (Exception e) {
 					logs.error(e.getMessage());
 				}
 			}
 		}
-		//template.delete();
-		//logs.debug(template + " was deleted");
 		return htmlPage("Выгрузка", logs.toString().replace("\n", "<br>"));
 	}
 
@@ -340,40 +287,8 @@ public class PackView extends PropertyReader implements FormMaterial, UriGenerat
 		}
 	}
 
-	private static File timestampFolder(File folderPath) {
-		String timestamp = timestamp("yyyyMMdd_HHmmss");
-		File timestampFolder = new File(folderPath.getAbsolutePath() + "/" + timestamp);
-		timestampFolder.mkdirs();
-		return timestampFolder;
-	}
-
-	public Response downloadDocFile(String path) {
-		File file = new File(path);
-		Response.ResponseBuilder responseBuilder = Response.ok(file);
-		responseBuilder.header("Content-Disposition", "attachment; filename=\"" + id + ".docx\"");
-		return responseBuilder.build();
-	}
-
-	@Override
-	public String base(){
-		return "/" + id;
-	}
-
-	@Override
-	public HtmlHelper htmlHelper() {
-		return html;
-	}
-
-	private ColumnTableBuilder<Question> getQuestionTable(QuestionTableBuilder.ColumnName... columnNames) throws URISyntaxException {
-		ColumnTableBuilder<Question> table = initQuestionTable(columnNames);
-		for (int i = 0; i < pack.size(); i++) {
-			table.addRow(pack.get(i));
-		}
-		return table;
-	}
-
-	private QuestionTableBuilder initQuestionTable(QuestionTableBuilder.ColumnName... columnNames) {
-		return new QuestionTableBuilder(pack, columnNames);
+	private ColumnTableBuilder<Question> getQuestionTable(Collection<Question> questions, QuestionTableBuilder.ColumnName... columnNames) throws URISyntaxException {
+		return new QuestionTableBuilder(questions, hrefs, columnNames);
 	}
 
 	private String questionHtml(Question question) {

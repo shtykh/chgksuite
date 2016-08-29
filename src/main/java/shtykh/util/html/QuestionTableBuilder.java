@@ -2,11 +2,11 @@ package shtykh.util.html;
 
 import org.apache.commons.lang3.StringUtils;
 import shtykh.quedit.author.Person;
-import shtykh.quedit.pack.Pack;
 import shtykh.quedit.question.Question;
 import shtykh.util.html.param.Parameter;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -16,8 +16,9 @@ import static shtykh.util.html.HtmlHelper.href;
  * Created by shtykh on 08/11/15.
  */
 public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
-	private static Map<ColumnName, ColumnBuilder<Question>> columns;
-	private final Pack pack;
+	private Map<ColumnName, ColumnBuilder<Question>> columns;
+	private final Collection<Question> questions;
+	private final UriGenerator uri;
 	
 	public enum ColumnName {
 		NUMBER("Номер"),
@@ -41,9 +42,10 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 		}
 	}
 
-	public QuestionTableBuilder(Pack pack, ColumnName... columnNames) {
+	public QuestionTableBuilder(Collection<Question> questions, UriGenerator uri, ColumnName... columnNames) {
 		super();
-		this.pack = pack;
+		this.questions = questions;
+		this.uri = uri;
 		initMap();
 		if (columnNames.length == 0) {
 			columnNames = ColumnName.values();
@@ -51,6 +53,7 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 		for (ColumnName columnName : columnNames) {
 			addColumn(columnName.getName(), columns.get(columnName));
 		}
+		questions.stream().forEachOrdered(this::addRow);
 	}
 	
 	private void initMap() {
@@ -67,7 +70,7 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 				int i = question.index();
 				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
 				String questionColor = question.getColor();
-				URI uriColor = pack.uri("nextColor", parameter, new Parameter<>("color", questionColor));
+				URI uriColor = uri.uri("nextColor", parameter, new Parameter<>("color", questionColor));
 				addColor(i + 1, 0, questionColor);
 				return href(uriColor, questionColor);
 			}
@@ -83,7 +86,7 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			public String getCell(Question question) {
 				int i = question.index();
 				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-				URI uriEdit = pack.uri("editForm", parameter);
+				URI uriEdit = uri.uri("editForm", parameter);
 				return href(uriEdit, "Редактировать");
 			}
 		});
@@ -92,7 +95,7 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			public String getCell(Question question) {
 				int i = question.index();
 				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-				URI uriEditAuthor = pack.uri("editAuthorForm", parameter);
+				URI uriEditAuthor = uri.uri("editAuthorForm", parameter);
 				Person author = question.getAuthor();
 				String authorString = "Добавить автора";
 				if (author != null && StringUtils.isNotBlank(author.toString())) {
@@ -106,7 +109,7 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			public String getCell(Question question) {
 				int i = question.index();
 				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-				URI uriReplace = pack.uri("copyTo", parameter);
+				URI uriReplace = uri.uri("copyTo", parameter);
 				return href(uriReplace, "В запас");
 			}
 		});
@@ -115,7 +118,7 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			public String getCell(Question question) {
 				int i = question.index();
 				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-				URI uriRemove = pack.uri("remove", parameter);
+				URI uriRemove = uri.uri("remove", parameter);
 				return href(uriRemove, "Удалить");
 			}
 		});
@@ -124,8 +127,8 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			public String getCell(Question question) {
 				int i = question.index();
 				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-				URI home = pack.uri("");
-				URI uriUp = i == 0 ? home : pack.uri("up", parameter);
+				URI home = uri.uri("");
+				URI uriUp = i == 0 ? home : uri.uri("up", parameter);
 				return href(uriUp, "^^");
 			}
 		});
@@ -134,8 +137,8 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			public String getCell(Question question) {
 				int i = question.index();
 				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-				URI home = pack.uri("");
-				URI uriDown = i == pack.size() - 1 ? home : pack.uri("down", parameter);
+				URI home = uri.uri("");
+				URI uriDown = i == questions.size() - 1 ? home : uri.uri("down", parameter);
 				return href(uriDown, "vv");
 			}
 		});

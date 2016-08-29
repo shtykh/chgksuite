@@ -8,7 +8,6 @@ import java.util.TreeMap;
  * Created by shtykh on 19/07/15.
  */
 public class ColoredTableBuilder extends TableBuilder {
-	private static final String DEFAULT_COLOR = "#FFFFFF";
 	private Map<Integer, Map<Integer, String>> bgColors;
 
 	public ColoredTableBuilder(String... hat) {
