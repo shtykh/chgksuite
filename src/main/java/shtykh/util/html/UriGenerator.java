@@ -26,7 +26,7 @@ public interface UriGenerator {
 		}
 	}
 
-	default String address(String method, Parameter... parameters) {
+	default String address(String method, Parameter... parameters) throws URISyntaxException {
 		return uri(method, parameters).toString();
 	}
 

@@ -41,8 +41,9 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	private Map<String, Pack> packs = new TreeMap<>();
 
 	private HtmlHelper htmlHelper;
+	
 	@Autowired
-	public void setHtmlHelper(HtmlHelper htmlHelper) {
+	public void setHtmlHelper(HtmlHelper htmlHelper) throws URISyntaxException {
 		this.htmlHelper = htmlHelper;
 		log.info("Check me out at " + uri(""));
 	}
@@ -301,6 +302,14 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 			@RequestParam("keys") String author
 	) {
 		return getOr404(id, "removeCommonAuthor", author);
+	}
+
+	@ResponseBody
+	@RequestMapping("{id}/uploadFormTrello")
+	public String uploadFormTrello(
+			@PathVariable("id") String id
+	) {
+		return getOr404(id, "uploadFormTrello");
 	}
 
 	@ResponseBody

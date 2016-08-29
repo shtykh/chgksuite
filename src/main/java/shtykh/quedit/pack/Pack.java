@@ -38,6 +38,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import static java.lang.Boolean.parseBoolean;
@@ -52,7 +54,7 @@ import static shtykh.util.html.form.param.FormParameterType.*;
 public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sable, Authored, UriGenerator {
 	private static final Logger log = Logger.getLogger(Pack.class);
 	private final String id;
-	private final HtmlHelper htmlHelper;
+	private final HtmlHelper html;
 	private final AuthorsCatalogue authors;
 	private final PackController packs;
 	private PackInfo info;
@@ -68,18 +70,57 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	private ActionBuilder removeEditorAction;
 	private ActionBuilder removeTesterAction;
 	private ActionBuilder replaceQuestionAction;
-	private Boolean debug = false;
+	private Map<String, String> hrefs;
 
-	public Pack(String id, HtmlHelper htmlHelper, AuthorsCatalogue authors, PackController packs, Properties properties) throws FileNotFoundException {
+	public Pack(String id, HtmlHelper html, AuthorsCatalogue authors, PackController packs, Properties properties) throws FileNotFoundException, URISyntaxException {
 		super(Question.class);
 		this.id = id;
-		this.htmlHelper = htmlHelper;
+		this.html = html;
 		this.authors = authors;
 		this.packs = packs;
 		setProperties(properties);
 		afterRun();
 		initActions();
 		initInfo();
+		initHrefs();
+	}
+
+	private void initHrefs() throws URISyntaxException {
+		hrefs = new HashMap<>();
+		String outFormat = getProperty("outFormat");
+		boolean debug = parseBoolean(getProperty("debug"));
+		initHref("compose", "Сгенерировать пакет",
+				new Parameter<>("outFormat", outFormat),
+				new Parameter<>("debug", debug));
+		initHref("uploadForm/4s", "Импорт пакета из 4s");
+		initHref("uploadForm/docx", "Импорт пакета из docx");
+		initHref("uploadFormTrello", "Импорт пакета из trello");
+		initHref("uploadForm/pic", "Загрузить картинку");
+		initHref("editCommonAuthorForm", "Автор всех вопросов");
+		initHref("text", "Полный текст в 4s");
+		initHref("split/getColor", "Разбить по цвету");
+		initHref("info", "Редактировать преамбулу");
+		initHref("", "К пакету " + getName());
+		initHref("/authors/list", "Каталог персонажей");
+	}
+
+	public void initHref(String method, String name, Parameter... parameters) throws URISyntaxException {
+		URI uri = uriBuilder(method, parameters).build();
+		String href = href(uri, name);
+		hrefs.put(method, href);
+	}
+
+	public void initHref(URI uri, String name) throws URISyntaxException {
+		String href = href(uri, name);
+		hrefs.put(uri.toString(), href);
+	}
+	
+	public String getHref(String method) {
+		return hrefs.get(method);
+	}
+
+	public String getHref(URI uri) {
+		return hrefs.get(uri.toString());
 	}
 
 	@Override
@@ -90,63 +131,43 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	public String home() throws Exception {
 		refresh();
 		ColoredTableBuilder questionsTable;
-		URI uriHome;
 		URI uriNew;
-		URI uriText;
-		URI uriBuild;
-		URI uriPreambula;
-		URI uriPacks;
 		TableBuilder hrefs;
 		try {
 			questionsTable = getQuestionTable();
-			uriHome = uri("");
-			Parameter<String> parameter = new Parameter<>("index", String.valueOf(size()));
-			uriNew = uri("editForm", parameter);
-			uriText = uri("text");
-			String outFormat = getProperty("outFormat");
-			debug = parseBoolean(getProperty("debug"));
-			uriPacks = packs.uri("");
-			uriBuild = uri("compose",
-					new Parameter<>("outFormat", outFormat),
-					new Parameter<>("debug", debug.toString()));
-			uriPreambula = uri("info");
+			Parameter<String> indexParameter = new Parameter<>("index", String.valueOf(size()));
+			uriNew = uri("editForm", indexParameter);
 			hrefs = new TableBuilder(
-					href(uri("uploadForm/4s"), "Импорт пакета из 4s"),
-					href(uri("uploadForm/docx"), "Импорт пакета из docx"),
-					href(uri("uploadForm/pic"), "Загрузить картинку"),
-					href(uri("editCommonAuthorForm"), "Автор всех вопросов")
+					getHref("uploadForm/4s"),
+					getHref("uploadForm/docx"),
+					getHref("uploadFormTrello"),
+					getHref("uploadForm/pic"),
+					getHref("editCommonAuthorForm")
 			);
 			hrefs.addRow(
-					href(uriText, "Полный текст в 4s"),
-					href(uriBuild, "Сгенерировать пакет"),
-					href(uri("split/getColor"), "Разбить по цвету"));
+					getHref("text"),
+					getHref("compose"),
+					getHref("split/getColor"));
 		} catch (Exception e) {
 			return error(e);
 		}
-
-		String hrefHome = href(uriHome, getName());
+		String hrefHome = getHref("");
 		String body = 
-				href(uriPacks, "К списку пакетов") + 
-				hrefs.toString() + "<br>" +
-						href(uriPreambula, "Редактировать преамбулу") +
+						href(packs.uri(""), "К списку пакетов") +
+						hrefs.toString() + "<br>" +
+						getHref("info") +
 						questionsTable.toString() + "<br>" +
 						href(uriNew, "Добавить вопрос №" + numerator().getNumber(size())) + "<br>" +
 						"";
 		return htmlPage(getName(), hrefHome, body);
 	}
-
-
-	public String info() throws Exception {
+	
+	public String info() {
 		refresh();
-		URI uriHome;
-		URI uriAuthors;
 		try {
-			uriHome = uri("");
-			uriAuthors = htmlHelper.uriBuilder("/authors/list").build();
 		} catch (Exception e) {
 			return error(e);
 		}
-		String hrefHome = href(uriHome, getName());
 		String body =
 				info.to4s().replace("\n", "<br>") + "<br>" +
 				editPackAction.buildForm(this) + "<br>" +
@@ -154,24 +175,23 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 				removeEditorAction.buildForm(authors) + "<br>" +
 				addTesterAction.buildForm(authors) + "<br>" +
 				removeTesterAction.buildForm(authors) + "<br>" +
-				href(uriAuthors, "Каталог персонажей") + "<br>" +
-				"";
-		return htmlPage(getName(), hrefHome, body);
+				getHref("/authors/list") + "<br>";
+		return htmlPage(getName(), getHref(""), body);
 	}
 	
 	private void initActions() {
-		editQuestionAction = new ActionBuilder(address("edit"));
-		editAuthorAction = new ActionBuilder(address("editAuthor"));
-		removeAuthorAction = new ActionBuilder(address("removeAuthor"));
-		editCommonAuthorAction = new ActionBuilder(address("editCommonAuthor"));
-		removeCommonAuthorAction = new ActionBuilder(address("removeCommonAuthor"));
-		editPackAction = new ActionBuilder(address("editPack"));
-		addEditorAction = new ActionBuilder(address("addEditor"));
-		addTesterAction = new ActionBuilder(address("addTester"));
-		removeEditorAction = new ActionBuilder(address("removeEditor"));
-		removeTesterAction = new ActionBuilder(address("removeTester"));
-		replaceQuestionAction = new ActionBuilder(address("copyTo"));
 		try {
+			editQuestionAction = new ActionBuilder(address("edit"));
+			editAuthorAction = new ActionBuilder(address("editAuthor"));
+			removeAuthorAction = new ActionBuilder(address("removeAuthor"));
+			editCommonAuthorAction = new ActionBuilder(address("editCommonAuthor"));
+			removeCommonAuthorAction = new ActionBuilder(address("removeCommonAuthor"));
+			editPackAction = new ActionBuilder(address("editPack"));
+			addEditorAction = new ActionBuilder(address("addEditor"));
+			addTesterAction = new ActionBuilder(address("addTester"));
+			removeEditorAction = new ActionBuilder(address("removeEditor"));
+			removeTesterAction = new ActionBuilder(address("removeTester"));
+			replaceQuestionAction = new ActionBuilder(address("copyTo"));
 			replaceQuestionAction
 					.addParam(PackController.class, "packNames", "Переместить в пакет", select)
 					.addParam(Question.class, "index", "Номер", hidden);
@@ -221,7 +241,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 					.addParam(NaturalNumerator.class, "first", "Нумерация: номер первого вопроса", number)
 					.addParam(PackInfo.class, "nameLJ", "Название пакета (для ЖЖ)", text)
 			;
-		} catch (NoSuchFieldException e) {
+		} catch (NoSuchFieldException | URISyntaxException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -232,8 +252,12 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	}
 
 	@Override
-	public void refresh() throws Exception {
-		super.refresh();
+	public void refresh() {
+		try {
+			super.refresh();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 		this.info = Jsonable.fromJson(Util.read(infoPath()), PackInfo.class);
 	}
 
@@ -257,7 +281,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		return info();
 	}
 
-	public String uploadForm(String what) {
+	public String uploadForm(String what) throws URISyntaxException {
 		return htmlPage("Загрузите файл", buildUploadForm(address("upload" + "/" + what)));
 	}
 
@@ -297,7 +321,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			File timestampFolder = timestampFolder(new File(folderPath));
 			clearFolder();
 			File fileDocx = saveFile(multipartFile, timestampFolder.getAbsolutePath(), id + ".docx");
-			StringLogger logs = new StringLogger(log, debug);
+			StringLogger logs = new StringLogger(log, parseBoolean(getProperty("debug")));
 			logs.info("File saved to server location : " + file);
 			String[] cmd = chgkSuiteCmd("parse", fileDocx.getAbsolutePath());
 			if (call(logs, cmd) == 0) {
@@ -323,7 +347,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 							new FormParameterSignature("path", hidden), file.getAbsolutePath(), String.class))
 					.addMember(new FormParameter<>(
 							new FormParameterSignature("number", "Добавить раздаточный материал к вопросу номер", text), "", String.class));
-			return htmlHelper.listResponce(
+			return html.listResponce(
 					"Картинка загружена", 
 					formBuilder.build(HTTPMethods.GET), 
 					getQuestionTable(QuestionTableBuilder.ColumnName.NUMBER, QuestionTableBuilder.ColumnName.ANSWER).buildHtml());
@@ -361,8 +385,8 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			URI uriColor = uri("nextColor", parameter, new Parameter<>("color", questionColor));
 			navigation.addRow(
 					href(uri("editForm", new Parameter<>("index", index - 1)), "Назад"),
-					href(uri(""), "К пакету"),
-					href(uriColor, questionColor),
+					getHref(""),
+					href(uriColor, "Сменить цвет"),
 					href(uri("editForm", new Parameter<>("index", index + 1)), "Вперёд"));
 			navigation.addColor(0, 2, questionColor);
 			String body = navigation
@@ -390,7 +414,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		String body = questionHtml(question) + "<br>"
 				+ editAuthorAction.buildForm(question)
 				+ removeAuthorAction.buildForm(question)
-				+ href(htmlHelper.uriBuilder("/authors/list").build(), "Каталог персонажей");
+				+ getHref("/authors/list");
 		return htmlPage("Добавить автора", body);
 	}
 
@@ -398,8 +422,8 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		authors.refresh();
 		String body = "Редоктировать автора ко всем вопросам " + id + "<br>"
 				+ editCommonAuthorAction.buildForm(authors)
-				+ removeCommonAuthorAction.buildForm(authors)
-				+ href(htmlHelper.uriBuilder("/authors/list").build(), "Каталог персонажей");
+				+ removeCommonAuthorAction.buildForm(authors) 
+				+ getHref("/authors/list");
 		return htmlPage("Автор всех вопросов", body);
 	}
 
@@ -462,7 +486,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		question.setNumber(numerator().getNumber(index));
 		question.setColor(color);
 		add(index, question);
-		return home();
+		return editForm(index);
 	}
 
 	public String editAuthor(
@@ -531,8 +555,6 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 			 int index,
 			 String colorHex
 	) throws Exception {
-		StringSerializer<Color> serializer = StringSerializer.getForClass(Color.class);
-		Question question = get(index);
 		Color color = Color.decode(colorHex);
 		if (color.equals(Color.white)) {
 			color = Color.red;
@@ -541,7 +563,9 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		} else {
 			color = Color.white;
 		}
+		StringSerializer<Color> serializer = StringSerializer.getForClass(Color.class);
 		colorHex = serializer.toString(color);
+		Question question = get(index);
 		question.setColor(colorHex);
 		add(index, question);
 		return editForm(index);
@@ -581,7 +605,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 		logs.debug("4s was written to " + name4sFile);
 		//File template = copyFileToDir(propertyReader.get(("quedit.properties", "templatedocx"), timestampFolder);
 		//logs.debug(template + " was created");
-		String[] cmd = chgkSuiteCmd("compose", name4sFile, outFormat, "--nospoilers");
+		String[] cmd = chgkSuiteCmd("compose", outFormat, name4sFile, "--nospoilers");
 		if (call(logs, cmd) == 0) {
 			logs.info("Файл формата " + outFormat + " успешно создан в папке " + timestampFolder);
 			if (outFormat.equals("docx")) {
@@ -620,7 +644,7 @@ public class Pack extends ListCatalogue<Question> implements FormMaterial, _4Sab
 	
 	@Override
 	public HtmlHelper htmlHelper() {
-		return htmlHelper;
+		return html;
 	}
 
 	private ColumnTableBuilder<Question> getQuestionTable(QuestionTableBuilder.ColumnName... columnNames) throws URISyntaxException {

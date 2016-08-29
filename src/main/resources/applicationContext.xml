@@ -7,6 +7,6 @@
 	http://www.springframework.org/schema/context/spring-context-3.0.xsd">
  
 	<context:component-scan base-package="shtykh.rest"/>
-    <bean id="htmlHelper" class="shtykh.util.html.HtmlHelper"/>
+    <bean id="html" class="shtykh.util.html.HtmlHelper"/>
     <bean id="authors" class="shtykh.rest.AuthorsCatalogue"/>
 </beans>

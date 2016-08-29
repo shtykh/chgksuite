@@ -48,6 +48,10 @@ public class HtmlHelper {
 		if (name == null) {
 			name = href;
 		}
+		return hrefInternal(href, name);
+	}
+
+	private static String hrefInternal(String href, String name) {
 		return tag("a")
 				.params(new Parameter<>("href", href))
 				.build(name);
@@ -72,7 +76,7 @@ public class HtmlHelper {
 		return htmlPage("Error", msg);
 	}
 
-	public URI getHome() {
+	public URI home() {
 		try {
 			return uriBuilder("").build();
 		} catch (URISyntaxException e) {

@@ -6,7 +6,7 @@
 if [ -z $QUEDIT_HOME ]; then
   CURRENT_DIR=$(pwd)
   if [ ! -f "$CURRENT_DIR/quedit.jar" ]; then
-    echo "ERROR: You need to either have QUEDIT_HOME env variable set or run Quedit from its directory"
+    echo "ERROR: You need either to have QUEDIT_HOME env variable set or run Quedit from its directory"
     exit 1    
   else
     QUEDIT_HOME=$CURRENT_DIR

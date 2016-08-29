@@ -12,9 +12,6 @@ public abstract class FolderKeaper implements PropertyReader {
 	protected File folder;
 	private Properties properties;
 
-	public FolderKeaper() {
-	}
-
 	private void initFolder(String filename) {
 		try {
 			folder = new File(filename);
