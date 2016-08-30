@@ -53,7 +53,10 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 		for (ColumnName columnName : columnNames) {
 			addColumn(columnName.getName(), columns.get(columnName));
 		}
-		questions.stream().forEachOrdered(this::addRow);
+		for (Question question : questions) {
+			addRow(question);
+		}
+
 	}
 	
 	private void initMap() {
@@ -71,7 +74,7 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
 				String questionColor = question.getColor();
 				URI uriColor = uri.uri("nextColor", parameter, new Parameter<>("color", questionColor));
-				addColor(i + 1, 0, questionColor);
+				addColor(i + 1, 1, questionColor);
 				return href(uriColor, questionColor);
 			}
 		});

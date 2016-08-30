@@ -8,7 +8,6 @@ import shtykh.quedit.author.Authored;
 import shtykh.quedit.author.MultiPerson;
 import shtykh.quedit.author.Person;
 import shtykh.quedit.numerator.Numerable;
-import shtykh.rest.AuthorsCatalogue;
 import shtykh.util.CSV;
 import shtykh.util.Jsonable;
 import shtykh.util.html.TableRowMaterial;
@@ -23,7 +22,6 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * Created by shtykh on 01/10/15.
  */
 public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Numerable, TableRowMaterial {
-	private AuthorsCatalogue authors;
 	private FormParameterMaterial<String> unaudible;
 	private FormParameterMaterial<Integer> index;
 	private FormParameterMaterial4s number;
@@ -187,19 +185,8 @@ public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Nume
 		this.index.set(index);
 	}
 
-	public void addAuthor(String name) {
-		if (author == null) {
-			author = new MultiPerson();
-		}
-		if (authors == null) {
-			throw new RuntimeException("Authors were null");
-		}
-		author.add(authors.get(name));
-	}
-
-	public void setAuthors(AuthorsCatalogue authors) throws Exception {
-		this.authors = authors;
-		authors.refresh();
+	public void addAuthor(Person author) {
+		this.author.add(author);
 	}
 
 	public void setColor(String colorhex) {
@@ -218,4 +205,7 @@ public class Question implements Authored, FormMaterial, Jsonable, _4Sable, Nume
 		return StringUtils.isEmpty(text.get()) && StringUtils.isEmpty(answer.get());
 	}
 
+	public void appendUnaudible(String delta) {
+		setUnaudible(getUnaudible() + delta);
+	}
 }

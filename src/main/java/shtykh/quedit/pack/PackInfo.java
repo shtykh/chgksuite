@@ -121,14 +121,6 @@ public class PackInfo implements FormMaterial, Authored, Jsonable, _4Sable {
 		return metaInfo;
 	}
 
-//	public static void main(String[] args) {
-//		PackInfo pi = new PackInfo();
-//		String json = pi.toJson();
-//		pi = Jsonable.fromJson(json, PackInfo.class);
-//		System.out.println(pi);
-//		System.out.println(json);
-//	}
-
 	public void save(String pathname) {
 		Util.write(new File(pathname), toJson());
 	}

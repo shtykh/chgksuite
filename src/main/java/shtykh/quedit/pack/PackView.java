@@ -38,10 +38,10 @@ import static shtykh.util.html.form.param.FormParameterType.*;
  */
 public class PackView extends PropertyReader implements FormMaterial {
 	private static final Logger log = Logger.getLogger(PackView.class);
-	private final String id;
+	
 	private HrefHelper hrefs;
-	private final AuthorsCatalogue authors;
-	private java.net.URI backUri;
+	private final URI personUri;
+	private final URI backUri;
 
 	private ActionBuilder editQuestionAction;
 	private ActionBuilder editAuthorAction;
@@ -55,13 +55,12 @@ public class PackView extends PropertyReader implements FormMaterial {
 	private ActionBuilder removeTesterAction;
 	private ActionBuilder replaceQuestionAction;
 
-	public PackView(String id, HtmlHelper html, PackController packs, AuthorsCatalogue authors, Pack pack) throws FileNotFoundException, URISyntaxException {
-		this.id = id;
-		this.authors = authors;
-		this.backUri = packs.uri("");
+	public PackView(String id, HtmlHelper html, PackController packs, Pack pack) throws FileNotFoundException, URISyntaxException {
 		setProperties(packs.getProperties());
 		afterRun();
 		hrefs = new HrefHelper("/" + id, html);
+		this.personUri = hrefs.uriAbsolute("/authors/list");
+		this.backUri = packs.uri("");
 		initActions();
 		initHrefs(pack.getName());
 	}
@@ -81,7 +80,8 @@ public class PackView extends PropertyReader implements FormMaterial {
 		hrefs.put("split/getColor", "Разбить по цвету");
 		hrefs.put("info", "Редактировать преамбулу");
 		hrefs.put("", "К пакету " + packName);
-		hrefs.put("/authors/list", "Каталог персонажей");
+		hrefs.put(personUri, "Каталог персонажей");
+		hrefs.put(backUri, "К списку пакетов");
 	}
 
 	public String home(String name, int size, String nextNumber, Collection<Question> questions) throws Exception {
@@ -108,7 +108,7 @@ public class PackView extends PropertyReader implements FormMaterial {
 		}
 		String hrefHome = hrefs.get("");
 		String body =
-				href(backUri, "К списку пакетов") +
+						hrefs.get(backUri) +
 						hrefTable.toString() + "<br>" +
 						hrefs.get("info") +
 						questionsTable.toString() + "<br>" +
@@ -117,15 +117,15 @@ public class PackView extends PropertyReader implements FormMaterial {
 		return htmlPage(name, hrefHome, body);
 	}
 
-	public String infoPage(PackInfo info) {
+	public String infoPage(PackInfo info, AuthorsCatalogue authors) {
 		String body =
 				info.to4s().replace("\n", "<br>") + "<br>" +
-						editPackAction.buildForm(this) + "<br>" +
+						editPackAction.buildForm(info) + "<br>" +
 						addEditorAction.buildForm(authors) + "<br>" +
 						removeEditorAction.buildForm(authors) + "<br>" +
 						addTesterAction.buildForm(authors) + "<br>" +
 						removeTesterAction.buildForm(authors) + "<br>" +
-						hrefs.get("/authors/list") + "<br>";
+						hrefs.get(personUri) + "<br>";
 		return htmlPage(info.getName(), hrefs.get(""), body);
 	}
 
@@ -218,7 +218,7 @@ public class PackView extends PropertyReader implements FormMaterial {
 		}
 	}
 
-	public String editForm(Question question) {
+	public String editForm(Question question, PackController packs, AuthorsCatalogue authors) {
 		try {
 			int index = question.index();
 			Parameter<String> parameter = new Parameter<>("index", String.valueOf(index));
@@ -234,27 +234,27 @@ public class PackView extends PropertyReader implements FormMaterial {
 			String body = navigation
 					+ questionHtml(question)
 					+ href(hrefs.uri("editAuthorForm", new Parameter<>("index", index)), "Редактировать авторов")
-					+ replaceQuestionAction.buildForm(question)
-					+ editQuestionAction.buildForm(question);
+					+ replaceQuestionAction.buildForm(question, packs)
+					+ editQuestionAction.buildForm(question, authors);
 			return htmlPage("Отредактируйте вопрос", body);
 		} catch (Exception e) {
 			return error(e);
 		}
 	}
 
-	public String editAuthorForm(Question question) throws Exception {
+	public String editAuthorForm(Question question, AuthorsCatalogue authors) throws Exception {
 		String body = questionHtml(question) + "<br>"
-				+ editAuthorAction.buildForm(question)
-				+ removeAuthorAction.buildForm(question)
-				+ hrefs.get("/authors/list");
+				+ editAuthorAction.buildForm(question, authors)
+				+ removeAuthorAction.buildForm(question, authors)
+				+ hrefs.get(personUri);
 		return htmlPage("Добавить автора", body);
 	}
 
-	public String editCommonAuthorForm() throws Exception {
+	public String editCommonAuthorForm(AuthorsCatalogue authors, String id) throws Exception {
 		String body = "Редактировать автора ко всем вопросам " + id + "<br>"
 				+ editCommonAuthorAction.buildForm(authors)
 				+ removeCommonAuthorAction.buildForm(authors)
-				+ hrefs.get("/authors/list");
+				+ hrefs.get(personUri);
 		return htmlPage("Автор всех вопросов", body);
 	}
 

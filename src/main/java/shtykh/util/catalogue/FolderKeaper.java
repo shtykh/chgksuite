@@ -29,7 +29,7 @@ public abstract class FolderKeaper extends PropertyReader {
 		initFolder(folderName());
 	}
 
-	protected String folderName() {
+	public String folderName() {
 		return getProperty(folderNameKey());
 	}
 
@@ -70,13 +70,9 @@ public abstract class FolderKeaper extends PropertyReader {
 
 	protected abstract void clearCash();
 
-	public abstract void refreshFile(File file);
+	public abstract void refreshFile(File file) throws Exception;
 
 	public abstract boolean isGood(File file);
-
-	public String folderPath() {
-		return folder.getAbsolutePath();
-	}
 
 	public Comparator<? super File> getFilesComparator() {
 		return new Comparator<File>() {

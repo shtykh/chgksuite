@@ -3,6 +3,8 @@ package shtykh.util.html.form.build;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.sun.research.ws.wadl.HTTPMethods;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import shtykh.util.html.form.material.FormMaterial;
 import shtykh.util.html.form.material.FormParameterMaterial;
 import shtykh.util.html.form.param.FormParameter;
@@ -18,6 +20,7 @@ import static shtykh.util.html.form.param.FormParameterType.comment;
  * Created by shtykh on 12/07/15.
  */
 public class ActionBuilder {
+	private static Logger log = LoggerFactory.getLogger(ActionBuilder.class);
 	private final String action;
 	private final Multimap<Field, FormParameterSignature> signatureMap;
 	private int signaturesNumber;
@@ -64,22 +67,22 @@ public class ActionBuilder {
 		FormParameterSignature formParameterSignature = new FormParameterSignature(parameterName, label, type);
 		return addParam(field, formParameterSignature);
 	}
-
-	public String buildForm(FormMaterial formMaterial) {
-		synchronized (formMaterial) {
-			Map<Integer, FormParameter> parameters = new TreeMap<>();
+	
+	public String buildForm(FormMaterial... formMaterials) {
+		FormBuilder builder = new FormBuilder(action);
+		Map<Integer, FormParameter> parameters = new TreeMap<>();
+		for (FormMaterial formMaterial : formMaterials) {
 			addParameters(parameters, formMaterial, new ArrayList<>());
-			FormBuilder builder = new FormBuilder(action);
-			for (int i = 0; i < signaturesNumber; i++) {
-				FormParameter formParameter = parameters.get(i);
-				if (null != formParameter) {
-					builder.addMember(formParameter);
-				} else {
-					//throw new RuntimeException(action + " error: " + i + "th parameter value wasn't found");
-				}
-			}
-			return builder.build(this.method);
 		}
+		for (int i = 0; i < signaturesNumber; i++) {
+			FormParameter formParameter = parameters.get(i);
+			if (null != formParameter) {
+				builder.addMember(formParameter);
+			} else {
+				log.warn(action + " error: " + i + "th parameter value wasn't found");
+			}
+		}
+		return builder.build(this.method);
 	}
 
 	private void addParameters(Map<Integer, FormParameter> parameters, 
