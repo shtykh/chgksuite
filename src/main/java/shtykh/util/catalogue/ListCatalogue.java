@@ -48,6 +48,7 @@ public abstract class ListCatalogue<T extends Jsonable & Numerable> extends Cata
 	@Override
 	public void add(Integer index, T item) {
 		if (index >= size()) {
+			item.newIndex(index);
 			list.add(item);
 		}
 		Util.write(file(index), item.toJson());

@@ -11,14 +11,11 @@ import shtykh.quedit._4s._4Sable;
 import shtykh.quedit.author.Authored;
 import shtykh.quedit.author.MultiPerson;
 import shtykh.quedit.author.Person;
-import shtykh.quedit.numerator.Numerator;
 import shtykh.quedit.numerator.QuestionNaturalNumerator;
 import shtykh.quedit.question.Question;
 import shtykh.rest.AuthorsCatalogue;
 import shtykh.rest.PackController;
-import shtykh.util.Jsonable;
 import shtykh.util.StringSerializer;
-import shtykh.util.Util;
 import shtykh.util.html.HtmlHelper;
 import shtykh.util.html.form.material.FormMaterial;
 
@@ -44,28 +41,27 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 	private final String id;
 	private final AuthorsCatalogue authors;
 	private final PackController packs;
-	private final String folderName;
-	private PackInfo info;
 	private Questions questions;
 	private PackView view;
 
 	public Pack(String id, HtmlHelper html, AuthorsCatalogue authors, PackController packs) throws FileNotFoundException, URISyntaxException {
 		this.id = id;
 		this.authors = authors;
+		if (authors == null) {
+			throw new RuntimeException("Authors were null");
+		}
 		this.packs = packs;
-		folderName = packs.getProperty("packs") + "/" + id;
-		initInfo();
-		this.questions = new Questions(packs.getProperties(), id, info);
-		view = new PackView(id, html, packs, authors, this);
+		this.questions = new Questions(packs.getProperties(), id);
+		view = new PackView(id, html, packs, this);
 	}
 
 	protected String folderName() {
-		return folderName;
+		return questions.folderName();
 	}
 
 	public String home() throws Exception {
 		refresh();
-		return view.home(getName(), size(), getNumerator().getNumber(size()), getAll());
+		return view.home(getName(), size(), questions.getNumber(size()), getAll());
 	}
 
 	private Collection<Question> getAll() {
@@ -78,16 +74,12 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 
 	public String info() throws Exception {
 		refresh();
-		return view.infoPage(info);
+		return view.infoPage(getInfo(), authors);
 	}
 	
 	public void refresh() throws Exception {
+		authors.refresh();
 		questions.refresh();
-		this.info = Jsonable.fromJson(Util.read(infoPath()), PackInfo.class);
-	}
-
-	private String infoPath() {
-		return folderName() + ".info";
 	}
 
 	public String editPack(
@@ -98,11 +90,12 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 			 int first,
 			 String zeroNumbers
 	) throws Exception {
-		setName(name);
-		setNameLJ(nameLJ);
-		setDate(date);
-		setMetaInfo(metaInfo);
-		setNumerator(new QuestionNaturalNumerator(first, zeroNumbers));
+		questions.setName(name);
+		questions.setNameLJ(nameLJ);
+		questions.setDate(date);
+		questions.setMetaInfo(metaInfo);
+		questions.setNumerator(new QuestionNaturalNumerator(first, zeroNumbers));
+		questions.saveInfo();
 		return info();
 	}
 
@@ -137,6 +130,20 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 		Parser4s parser4s = new Parser4s(file.getAbsolutePath(), folderName() + "/pics");
 		this.fromParser(parser4s);
 		file.delete();
+	}
+
+	private void fromParser(Parser4s parser4s) {
+		setInfo(parser4s.getInfo());
+		addAll(parser4s.getQuestions());
+		authors.addAll(parser4s.getPersons());
+	}
+
+	private void setInfo(PackInfo info) {
+		questions.setInfo(info);
+		if (StringUtils.isBlank(getInfo().getName())) {
+			getInfo().setName(id);
+		}
+		questions.saveInfo();
 	}
 
 	public String upload_docx(MultipartFile multipartFile) {
@@ -177,27 +184,17 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 		}
 	}
 
-	public void fromParser(Parser4s parser4s) {
-		info = parser4s.getInfo();
-		if (StringUtils.isBlank(info.getName())) {
-			info.setName(id);
-		}
-		info.save(infoPath());
-		addAll(parser4s.getQuestions());
-		authors.addAll(parser4s.getPersons());
-	}
-
 	public void addAll(Collection<Question> questions) {
 		this.questions.addAll(questions);
 	}
 
 	public String editForm(int index) {
-		return view.editForm(getRefreshed(index));
+		return view.editForm(getRefreshed(index), packs, authors);
 	}
 
 	public String editAuthorForm(int index) throws Exception {
 		Question question = getRefreshed(index);
-		return view.editAuthorForm(question);
+		return view.editAuthorForm(question, authors);
 	}
 	
 	private Question getRefreshed(int index) {
@@ -209,9 +206,7 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 			} else {
 				question.newIndex(index);
 			}
-			authors.refresh();
-			getNumerator().renumber(question);
-			question.setAuthors(authors);
+			questions.renumber(question);
 			return question;
 		} catch (Exception e) {
 			return null;
@@ -220,7 +215,7 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 
 	public String editCommonAuthorForm() throws Exception {
 		authors.refresh();
-		return view.editCommonAuthorForm();
+		return view.editCommonAuthorForm(authors, id);
 	}
 
 	public String removeMethod(int index) throws Exception {
@@ -230,9 +225,9 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 
 	public String addPicture(String number, String path) {
 		try{
-			int index = getNumerator().getIndex(number);
+			int index = questions.getIndex(number);
 			Question q = questions.get(index);
-			q.setUnaudible(q.getUnaudible() + "\nРаздаточный материал: (img " + path + ")");
+			q.appendUnaudible("\nРаздаточный материал: (img " + path + ")");
 			return editForm(index);
 		} catch (Exception e) {
 			return error(e);
@@ -268,9 +263,11 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 			 String comment,
 			 String sources
 	) throws Exception {
+		authors.refresh();
 		Question question = questions.get(index);
 		if (question == null) {
 			question = new Question();
+			question.setIndex(index);
 		}
 		question.setUnaudible(unaudible);
 		question.setText(text);
@@ -279,7 +276,6 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 		question.setImpossibleAnswers(impossibleAnswers);
 		question.setPossibleAnswers(possibleAnswers);
 		question.setSources(sources);
-		question.setNumber(getNumerator().getNumber(index));
 		question.setColor(color);
 		add(index, question);
 		return editForm(index);
@@ -290,15 +286,14 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 			 String author
 	) {
 		try {
-			Question question = questions.get(index);
-			question.setAuthors(authors);
-			question.addAuthor(author);
-			add(index, question);
+			Question question = getRefreshed(index);
+			question.addAuthor(authors.get(author));
 			return editForm(index);
 		} catch (Exception e) {
 			return error(e);
 		}
 	}
+
 
 	public String editCommonAuthor(
 			String author
@@ -422,56 +417,32 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 		return responseBuilder.build();
 	}
 
-	private void initInfo() {
-		try {
-			this.info = Jsonable.fromJson(Util.read(infoPath()), PackInfo.class);
-		} catch (Exception e) {
-			info = new PackInfo();
-			info.save(infoPath());
-		}
-		if (StringUtils.isBlank(getName())) {
-			setName(id);
-		}
-	}
-
 	public void add(Integer index, Question item) {
 		questions.add(index, item);
-		getNumerator().number(index, item);
+		questions.number(index, item);
 	}
 
 	public String addEditor(String name) throws Exception {
-		if (authors == null) {
-			throw new RuntimeException("Authors were null");
-		}
-		info.addAuthor(authors.get(name));
-		info.save(infoPath());
+		getInfo().addAuthor(authors.get(name));
+		questions.saveInfo();
 		return info();
 	}
 
 	public String removeEditor(String name) throws Exception {
-		if (authors == null) {
-			throw new RuntimeException("Authors were null");
-		}
-		info.removeAuthor(authors.get(name));
-		info.save(infoPath());
+		getInfo().removeAuthor(authors.get(name));
+		questions.saveInfo();
 		return info();
 	}
 
 	public String addTester(String name) throws Exception {
-		if (authors == null) {
-			throw new RuntimeException("Authors were null");
-		}
-		info.addTester(authors.get(name));
-		info.save(infoPath());
+		getInfo().addTester(authors.get(name));
+		questions.saveInfo();
 		return info();
 	}
 	
 	public String removeTester(String name) throws Exception {
-		if (authors == null) {
-			throw new RuntimeException("Authors were null");
-		}
-		info.removeTester(authors.get(name));
-		info.save(infoPath());
+		getInfo().removeTester(authors.get(name));
+		questions.saveInfo();
 		return info();
 	}
 
@@ -488,9 +459,9 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 	@Override
 	public String to4s() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(info.to4s()).append('\n');
+		sb.append(getInfo().to4s()).append('\n');
 		for (Question question : questions.getAll()) {
-			getNumerator().renumber(question);
+			questions.renumber(question);
 			sb.append(question.to4s()).append('\n');
 		}
 		return sb.toString();
@@ -498,61 +469,20 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 
 	@Override
 	public Person getAuthor() {
-		return info.getAuthor();
+		return getInfo().getAuthor();
 	}
 	
 	@Override
 	public void setAuthor(MultiPerson author) {
-		info.setAuthor(author);
-		info.save(infoPath());
-	}
-
-	public String getMetaInfo() {
-		return info.getMetaInfo();
-	}
-
-	public void setMetaInfo(String metaInfo) {
-		info.setMetaInfo(metaInfo);
-		info.save(infoPath());
-	}
-
-	public void setName(String name) {
-		info.setName(name);
-		info.save(infoPath());
-	}
-
-	public String getNameLJ() {
-		return info.getNameLJ();
-	}
-
-	public void setNameLJ(String nameLJ) {
-		info.setNameLJ(nameLJ);
-		info.save(infoPath());
-	}
-
-	public String getDate() {
-		return info.getDate();
-	}
-
-	public void setDate(String date) {
-		info.setDate(date);
-		info.save(infoPath());
-	}
-
-	public String getName() {
-		return info.getName();
-	}
-
-	public void setNumerator(QuestionNaturalNumerator numerator) {
-		info.setNumerator(numerator);
-		info.save(infoPath());
+		getInfo().setAuthor(author);
+		questions.saveInfo();
 	}
 
 	public PackInfo getInfo() {
-		return info;
+		return questions.getInfo();
 	}
 
-	public Numerator<Question> getNumerator() {
-		return questions.getNumerator();
+	public String getName() {
+		return questions.getName();
 	}
 }

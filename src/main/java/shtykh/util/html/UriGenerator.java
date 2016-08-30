@@ -18,6 +18,14 @@ public interface UriGenerator {
 		}
 	}
 
+	default URI uriAbsolute(String method, Parameter... parameters) {
+		try {
+			return htmlHelper().uriBuilder(method, parameters).build();
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	default URIBuilder uriBuilder(String method, Parameter... parameters) {
 		try {
 			return htmlHelper().uriBuilder(base() + "/" + method, parameters);
