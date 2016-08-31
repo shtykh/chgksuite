@@ -157,8 +157,7 @@ public class PackInfo implements FormMaterial, Authored, Jsonable, _4Sable {
 			tester.sort();
 			String firstSymbol = (StringUtils.isBlank(metaInfo.get())?"# ":"");
 			String who = author.getPersonList().size() > 1 ? "Редакторы выражают":"Редактор выражает";
-			return firstSymbol + who + " благодарность " +
-					"за помощь и ценные замечания в подготовке пакета следующим людям:\n" +
+			return firstSymbol + who + " благодарность за помощь и ценные замечания в подготовке пакета следующим людям:\n#" +
 					tester;
 		}
 	}

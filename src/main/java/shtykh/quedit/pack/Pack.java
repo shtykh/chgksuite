@@ -28,6 +28,7 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static java.lang.Boolean.parseBoolean;
+import static shtykh.rest.StringConstants.getString;
 import static shtykh.util.Util.*;
 import static shtykh.util.html.HtmlHelper.*;
 import static shtykh.util.html.form.param.FormParameterType.file;
@@ -223,7 +224,7 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 		try{
 			int index = questions.getIndex(number);
 			Question q = questions.get(index);
-			q.appendUnaudible("\nРаздаточный материал: (img " + path + ")");
+			q.appendUnaudible(getString("IMG_COMMENT", path));
 			return editForm(index);
 		} catch (Exception e) {
 			return error(e);
@@ -364,7 +365,7 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 			Method method = findMethodByName(Question.class, methodName);
 			for (Question question : getAll()) {
 				Object result = method.invoke(question);
-				String key = result == null ? "null" : result.toString();
+				String key = String.valueOf(result);
 				map.put(key, question);
 			}
 			for (String key : map.keySet()) {
@@ -372,7 +373,7 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 			}
 			return packs.all();
 		} catch (Exception e) {
-			return errorPage("Не удалось разбить " + id + " на подпакеты по признаку " + methodName);
+			return errorPage(getString("SPLIT_FAILED", id, methodName));
 		}
 	}
 

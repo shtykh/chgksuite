@@ -23,7 +23,8 @@ public class MainApplication {
 					HtmlHelper.class,
 					AuthorsCatalogue.class,
 					PackController.class,
-					MainApplication.class
+					MainApplication.class,
+					StringConstants.class
 			};
 			SpringApplication app = new SpringApplicationBuilder()
 					.sources(classes)

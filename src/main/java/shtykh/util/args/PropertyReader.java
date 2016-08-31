@@ -18,14 +18,18 @@ public abstract class PropertyReader implements CommandLineRunner {
 			throw new RuntimeException("getProperties() was not found");
 		} else {
 			String filename = args[0];
-			try {
-				setProperties(new Properties());
-				properties.load(new FileReader(filename));
-				System.out.println(filename + " was read");
-				afterRun();
-			} catch (Exception e) {
-				throw new RuntimeException(filename + " is bad propertyFile", e);
-			}
+			readFromFile(filename);
+		}
+		afterRun();
+	}
+
+	protected void readFromFile(String filename) {
+		try {
+			setProperties(new Properties());
+			properties.load(new FileReader(filename));
+			System.out.println(filename + " was read");
+		} catch (Exception e) {
+			throw new RuntimeException(filename + " is bad propertyFile", e);
 		}
 	}
 
