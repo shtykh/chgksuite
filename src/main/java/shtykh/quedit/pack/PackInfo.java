@@ -24,15 +24,21 @@ public class PackInfo implements FormMaterial, Authored, Jsonable, _4Sable {
 	private FormParameterMaterial4s nameLJ;
 	private FormParameterMaterial4s date;
 	private MultiPerson author;
+	private FormParameterMaterial4s editor;
+	private MultiPerson tester;
 	private QuestionNaturalNumerator numerator;
 
-	public void setTester(MultiPerson tester) {
-		this.tester = tester;
+	public PackInfo(PackInfo original) {
+		metaInfo = original.metaInfo.copy();
+		name = original.name.copy();
+		nameLJ = original.nameLJ.copy();
+		date = original.date.copy();
+		author = original.author.copy();
+		editor = original.editor.copy();
+		tester = original.tester.copy();
+		numerator = original.numerator.copy();
 	}
-
-	private MultiPerson tester;
-	private FormParameterMaterial4s editor;
-
+	
 	public PackInfo() {
 		metaInfo = new FormParameterMaterial4s(Type4s.META, "");
 		name = new FormParameterMaterial4s(Type4s.TITLE, "");
@@ -42,6 +48,10 @@ public class PackInfo implements FormMaterial, Authored, Jsonable, _4Sable {
 		author = new MultiPerson();
 		tester = new MultiPerson();
 		numerator = new QuestionNaturalNumerator(1);
+	}
+
+	public void setTester(MultiPerson tester) {
+		this.tester = tester;
 	}
 	
 	public void addAuthor(Person name) {
@@ -187,5 +197,15 @@ public class PackInfo implements FormMaterial, Authored, Jsonable, _4Sable {
 			was = "";
 		}
 		metaInfo.set(was + "\n" + value);
+	}
+
+	public PackInfo copy() {
+		return new PackInfo(this);
+	}
+
+
+	public PackInfo appendName(String delta) {
+		name.set(name.get() + delta);
+		return this;
 	}
 }

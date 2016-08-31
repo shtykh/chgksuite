@@ -66,6 +66,10 @@ public class Questions extends ListCatalogue<Question> {
 		super.refresh();
 		getAll().stream().forEach(getNumerator()::renumber);
 		this.info = Jsonable.fromJson(Util.read(infoPath()), PackInfo.class);
+		if (StringUtils.isBlank(getInfo().getName())) {
+			getInfo().setName(id);
+			saveInfo();
+		}
 	}
 
 	public void setInfo(PackInfo info) {

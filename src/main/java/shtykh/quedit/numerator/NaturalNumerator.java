@@ -10,7 +10,7 @@ import shtykh.util.html.form.material.FormParameterMaterial;
  */
 public class NaturalNumerator<T extends Numerable> implements Numerator<T>, Jsonable, FormMaterial {
 	private FormParameterMaterial<Integer> first;
-	private FormParameterMaterial<CSV> zeroNumbers;
+	protected FormParameterMaterial<CSV> zeroNumbers;
 
 	public NaturalNumerator() {
 		this(1, "0", "00", "000");

@@ -28,5 +28,4 @@ public interface Numerator<T extends Numerable> {
 	default void renumber(T item) {
 		item.setNumber(getNumber(item.index()));
 	}
-
 }

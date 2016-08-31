@@ -78,4 +78,8 @@ public class MultiPerson extends Person {
 	public void sort() {
 		Collections.sort(personList);
 	}
+
+	public MultiPerson copy() {
+		return new MultiPerson().add(this);
+	}
 }

@@ -13,4 +13,8 @@ public class QuestionNaturalNumerator extends NaturalNumerator<Question> {
 	public QuestionNaturalNumerator(int first, String... zeroNumbers) {
 		super(first, zeroNumbers);
 	}
+
+	public QuestionNaturalNumerator copy() {
+		return new QuestionNaturalNumerator(this.getFirst(), this.zeroNumbers.get().asArray());
+	}
 }

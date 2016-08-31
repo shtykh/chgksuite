@@ -18,4 +18,8 @@ public class FormParameterMaterial4s extends FormParameterMaterial<String> {
 		return StringUtils.isBlank(get()) ? "" : type4s.getSymbol() + " " + get() + "\n";
 	}
 
+	public FormParameterMaterial4s copy() {
+		return new FormParameterMaterial4s(this.type4s, this.value);
+	}
+
 }

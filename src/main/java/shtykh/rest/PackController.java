@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import shtykh.quedit.pack.Pack;
+import shtykh.quedit.pack.PackInfo;
 import shtykh.quedit.question.Question;
 import shtykh.util.CSV;
 import shtykh.util.catalogue.FolderKeaper;
@@ -142,9 +143,15 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 		return getOr404(id, "info");
 	}
 
-	public void addPack(String key, Collection<Question> questions) throws Exception {
-		Pack pack = addPack(key);
+	public void addPack(String key, Collection<Question> questions, PackInfo packInfo) throws Exception {
+		Pack pack = addPack(key, packInfo);
 		pack.addAll(questions);
+	}
+
+	public Pack addPack(String key, PackInfo packInfo) throws Exception {
+		Pack pack = addPack(key);
+		pack.setInfo(packInfo);
+		return pack;
 	}
 
 	private Pack addPack(String id) throws Exception {

@@ -3,7 +3,6 @@ package shtykh.quedit.pack;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.web.multipart.MultipartFile;
 import shtykh.quedit._4s.Parser4s;
@@ -138,11 +137,8 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 		authors.addAll(parser4s.getPersons());
 	}
 
-	private void setInfo(PackInfo info) {
+	public void setInfo(PackInfo info) {
 		questions.setInfo(info);
-		if (StringUtils.isBlank(getInfo().getName())) {
-			getInfo().setName(id);
-		}
 		questions.saveInfo();
 	}
 
@@ -372,7 +368,7 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 				map.put(key, question);
 			}
 			for (String key : map.keySet()) {
-				packs.addPack(id + "_" + key, map.get(key));
+				packs.addPack(id + "_" + key, map.get(key), getInfo().copy().appendName("_" + key));
 			}
 			return packs.all();
 		} catch (Exception e) {

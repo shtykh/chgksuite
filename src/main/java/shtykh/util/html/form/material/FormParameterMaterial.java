@@ -22,6 +22,12 @@ public class FormParameterMaterial<T> {
 		this.serializer = getSerializer(clazz);
 	}
 
+	public FormParameterMaterial(FormParameterMaterial<T> original) {
+		this.value = original.value;
+		this.serializer = original.serializer;
+		this.allowedTypes = original.allowedTypes;
+	}
+
 	protected StringSerializer<T> getSerializer(Class<T> clazz) {
 		StringSerializer<T> serializer = StringSerializer.getForClass(clazz);
 		if (serializer == null) {
@@ -67,5 +73,4 @@ public class FormParameterMaterial<T> {
 		}
 		return new FormParameter<T>(sign, this);
 	}
-
 }
