@@ -3,11 +3,15 @@ package shtykh.util.html;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by shtykh on 19/07/15.
  */
 public class ColoredTableBuilder extends TableBuilder {
+	private static final String COLOR_PATTERN_STRING = "#[0-9a-f]{6}";
+	private static final Pattern COLOR_PATTERN = Pattern.compile(COLOR_PATTERN_STRING);
 	private Map<Integer, Map<Integer, String>> bgColors;
 
 	public ColoredTableBuilder(String... hat) {
@@ -26,7 +30,14 @@ public class ColoredTableBuilder extends TableBuilder {
 			bgColors.put(row, new TreeMap<>());
 		}
 		Map<Integer, String> rowColors = bgColors.get(row);
-		rowColors.put(column, colorHex);
+		if (colorHex.matches(COLOR_PATTERN_STRING)) {
+			rowColors.put(column, colorHex);
+		} else {
+			Matcher m = COLOR_PATTERN.matcher(colorHex);
+			if(m.find()) {
+				rowColors.put(column, m.group(0));
+			}
+		}
 	}
 
 	@Override

@@ -12,8 +12,8 @@ import shtykh.quedit.pack.PackInfo;
 import shtykh.quedit.question.Question;
 import shtykh.util.CSV;
 import shtykh.util.catalogue.FolderKeaper;
+import shtykh.util.html.ColoredTableBuilder;
 import shtykh.util.html.HtmlHelper;
-import shtykh.util.html.TableBuilder;
 import shtykh.util.html.UriGenerator;
 import shtykh.util.html.form.material.FormMaterial;
 import shtykh.util.html.form.material.FormParameterMaterial;
@@ -101,10 +101,14 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	public String all() {
 		try {
 			refresh();
-			TableBuilder table = new TableBuilder();
+			ColoredTableBuilder table = new ColoredTableBuilder();
+			int row = 0;
 			for (String id : packs.keySet()) {
 				URI editUri = htmlHelper.uriBuilder("/" + id).build();
-				table.addRow(href(editUri, packs.get(id).getName()));
+				String name = packs.get(id).getName();
+				table.addRow(href(editUri, name));
+				table.addColor(row, 0, name);
+				row++;
 			}
 			URI addUri = htmlHelper.uriBuilder("/new").build();
 			table.addRow(href(addUri, "Новый пакет"));
