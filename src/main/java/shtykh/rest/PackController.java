@@ -17,6 +17,7 @@ import shtykh.util.html.HtmlHelper;
 import shtykh.util.html.UriGenerator;
 import shtykh.util.html.form.material.FormMaterial;
 import shtykh.util.html.form.material.FormParameterMaterial;
+import shtykh.util.synth.Synthesator;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -39,6 +40,9 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	private static final Logger log = LoggerFactory.getLogger(PackController.class);
 	protected FormParameterMaterial<CSV> packNames = new FormParameterMaterial<>(new CSV(""), CSV.class);
 	private Map<String, Pack> packs = new TreeMap<>();
+	
+	@Autowired
+	private Synthesator reader;
 	
 	@Autowired
 	private AuthorsCatalogue authors;
@@ -380,6 +384,12 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 							@RequestParam("outFormat") String outFormat,
 							@RequestParam("debug") boolean debug) throws IOException {
 		return getOr404(id, "compose", outFormat, debug);
+	}
+
+	@ResponseBody
+	@RequestMapping("{id}/read")
+	public String read(@PathVariable("id") String id, @RequestParam("index") Integer index) throws IOException {
+		return getOr404(id, "read", reader, index);
 	}
 
 	@ResponseBody

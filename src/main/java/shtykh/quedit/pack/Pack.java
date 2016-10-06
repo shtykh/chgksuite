@@ -14,9 +14,11 @@ import shtykh.quedit.numerator.QuestionNaturalNumerator;
 import shtykh.quedit.question.Question;
 import shtykh.rest.AuthorsCatalogue;
 import shtykh.rest.PackController;
+import shtykh.util.CMD;
 import shtykh.util.StringSerializer;
 import shtykh.util.html.HtmlHelper;
 import shtykh.util.html.form.material.FormMaterial;
+import shtykh.util.synth.Synthesator;
 
 import javax.ws.rs.core.Response;
 import java.awt.*;
@@ -43,7 +45,7 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 	private final PackController packs;
 	private Questions questions;
 	private PackView view;
-
+	
 	public Pack(String id, HtmlHelper html, AuthorsCatalogue authors, PackController packs) throws FileNotFoundException, URISyntaxException {
 		this.id = id;
 		this.authors = authors;
@@ -151,18 +153,18 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 			File fileDocx = saveFile(multipartFile, timestampFolder.getAbsolutePath(), id + ".docx");
 			StringLogger logs = new StringLogger(log, parseBoolean(questions.getProperty("debug")));
 			logs.info("File saved to server location : " + file);
-			String[] cmd = chgkSuiteCmd("parse", fileDocx.getAbsolutePath());
-			if (call(logs, cmd) == 0) {
+			CMD cmd = chgkSuiteCmd("parse", fileDocx.getAbsolutePath());
+			if (cmd.call(logs) == 0) {
 				File file4s = new File(timestampFolder.getAbsoluteFile() + "/" + id + ".4s");
 				copyFilesToDir(
-						timestampFolder, 
-						folder(folderName(), "/pics"), 
+						timestampFolder,
+						folder(folderName(), "/pics"),
 						new SuffixFileFilter(new String[]{"png", "jpg", "jpeg"})); // todo put in a property
 				from4sFile(file4s);
 				return home();
 			} else {
 				return htmlPage(
-						"Загрузка из " + multipartFile.getOriginalFilename(), 
+						"Загрузка из " + multipartFile.getOriginalFilename(),
 						logs.toString().replace("\n", "<br>"));
 			}
 		} catch (Exception e) {
@@ -283,12 +285,17 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 			 String author
 	) {
 		try {
-			Question question = getRefreshed(index);
-			question.addAuthor(authors.get(author));
+			editAuthorInternal(index, author);
 			return editForm(index);
 		} catch (Exception e) {
 			return error(e);
 		}
+	}
+
+	private void editAuthorInternal(Integer index, String author) throws Exception{
+		Question question = getRefreshed(index);
+		question.addAuthor(authors.get(author));
+		add(index, question);
 	}
 
 
@@ -297,7 +304,7 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 	) {
 		try {
 			for (int i = 0; i < getAll().size(); i++) {
-				editAuthor(i, author);
+				editAuthorInternal(i, author);
 			}
 			return home();
 		} catch (Exception e) {
@@ -310,7 +317,6 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 			String author
 	) {
 		try {
-
 			if (index == null) {
 				for (int i = 0; i < getAll().size(); i++) {
 					removeAuthor(i, author);
@@ -359,7 +365,7 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 		return home();
 	}
 	
-	public String split(String methodName) throws Exception {
+	public String split(String methodName) {
 		try{
 			Multimap<String, Question> map = ArrayListMultimap.create();
 			Method method = findMethodByName(Question.class, methodName);
@@ -377,6 +383,16 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 		}
 	}
 
+	public String read(Synthesator reader, int index) {
+		try{
+			Question q = getRefreshed(index);
+			reader.say(q.to4s());
+			return home();
+		} catch (Exception e) {
+			return error(e);
+		}
+	}
+
 	public String text() throws IOException {
 		String text4s = to4s();
 		return htmlPage(getName(), "", text4s.replace("\n", "<br>"));
@@ -391,8 +407,8 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 		String name4sFile = timestampFolder.getAbsoluteFile() + "/" + id + ".4s";
 		write(new File(name4sFile), text4s);
 		logs.debug("4s was written to " + name4sFile);
-		String[] cmd = chgkSuiteCmd("compose", outFormat, name4sFile, "--nospoilers");
-		int result = call(logs, cmd);
+		CMD cmd = chgkSuiteCmd("compose", outFormat, name4sFile, "--nospoilers");
+		int result = cmd.call(logs);
 		return view.compose_result_page(result, logs, timestampFolder, outFormat);
 	}
 	
@@ -443,14 +459,10 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 		return info();
 	}
 
-	private String[] chgkSuiteCmd(String... parameters) throws FileNotFoundException {
-		String[] cmd = new String[parameters.length + 2];
-		cmd[0] = questions.getProperty("python");
-		cmd[1] = questions.getProperty("chgksuite");
-		for (int i = 0; i < parameters.length; i++) {
-			cmd[i + 2] = parameters[i];
-		}
-		return cmd;
+	private CMD chgkSuiteCmd(String... parameters) throws FileNotFoundException {
+		return new CMD(questions.getProperty("python"))
+				.with(questions.getProperty("chgksuite"))
+				.with(parameters);
 	}
 
 	@Override

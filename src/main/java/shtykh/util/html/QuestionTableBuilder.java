@@ -24,8 +24,9 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 		NUMBER("Номер"),
 		COLOR("Цвет"),
 		ANSWER("Ответ"),
-		EDIT("Редактировать"), 
-		AUTHORS("Авторы"), 
+		EDIT("Редактировать"),
+		AUTHORS("Авторы"),
+		READ("Прочитать"),
 		REPLACE("В запас"), 
 		REMOVE("Удалить"), 
 		UP("Вверх"), 
@@ -71,9 +72,8 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			@Override
 			public String getCell(Question question) {
 				int i = question.index();
-				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
 				String questionColor = question.getColor();
-				URI uriColor = uri.uri("nextColor", parameter, new Parameter<>("color", questionColor));
+				URI uriColor = uri.uri("nextColor", indexParam(question), new Parameter<>("color", questionColor));
 				addColor(i + 1, 1, questionColor);
 				return href(uriColor, questionColor);
 			}
@@ -87,18 +87,21 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 		columns.put(ColumnName.EDIT, new ColumnBuilder<Question>() {
 			@Override
 			public String getCell(Question question) {
-				int i = question.index();
-				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-				URI uriEdit = uri.uri("editForm", parameter);
+				URI uriEdit = uri.uri("editForm", indexParam(question));
 				return href(uriEdit, "Редактировать");
+			}
+		});
+		columns.put(ColumnName.READ, new ColumnBuilder<Question>() {
+			@Override
+			public String getCell(Question question) {
+				URI uriEdit = uri.uri("read", indexParam(question));
+				return href(uriEdit, "Прочитать");
 			}
 		});
 		columns.put(ColumnName.AUTHORS, new ColumnBuilder<Question>() {
 			@Override
 			public String getCell(Question question) {
-				int i = question.index();
-				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-				URI uriEditAuthor = uri.uri("editAuthorForm", parameter);
+				URI uriEditAuthor = uri.uri("editAuthorForm", indexParam(question));
 				Person author = question.getAuthor();
 				String authorString = "Добавить автора";
 				if (author != null && StringUtils.isNotBlank(author.toString())) {
@@ -110,18 +113,14 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 		columns.put(ColumnName.REPLACE, new ColumnBuilder<Question>() {
 			@Override
 			public String getCell(Question question) {
-				int i = question.index();
-				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-				URI uriReplace = uri.uri("copyTo", parameter);
+				URI uriReplace = uri.uri("copyTo", indexParam(question));
 				return href(uriReplace, "В запас");
 			}
 		});
 		columns.put(ColumnName.REMOVE, new ColumnBuilder<Question>() {
 			@Override
 			public String getCell(Question question) {
-				int i = question.index();
-				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
-				URI uriRemove = uri.uri("remove", parameter);
+				URI uriRemove = uri.uri("remove", indexParam(question));
 				return href(uriRemove, "Удалить");
 			}
 		});
@@ -129,9 +128,8 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			@Override
 			public String getCell(Question question) {
 				int i = question.index();
-				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
 				URI home = uri.uri("");
-				URI uriUp = i == 0 ? home : uri.uri("up", parameter);
+				URI uriUp = i == 0 ? home : uri.uri("up", indexParam(question));
 				return href(uriUp, "^^");
 			}
 		});
@@ -139,11 +137,15 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			@Override
 			public String getCell(Question question) {
 				int i = question.index();
-				Parameter<String> parameter = new Parameter<>("index", String.valueOf(i));
 				URI home = uri.uri("");
-				URI uriDown = i == questions.size() - 1 ? home : uri.uri("down", parameter);
+				URI uriDown = i == questions.size() - 1 ? home : uri.uri("down", indexParam(question));
 				return href(uriDown, "vv");
 			}
 		});
+	}
+	
+	private static Parameter<String> indexParam(Question q) {
+		int i = q.index();
+		return new Parameter<>("index", String.valueOf(i));
 	}
 }

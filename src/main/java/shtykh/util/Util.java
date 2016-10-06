@@ -91,26 +91,6 @@ public class Util {
 		throw new NoSuchMethodException(clazz.toString() + "::" + methodName);
 	}
 
-	public static int call(StringLogger logs, String[] cmd) throws IOException {
-		logs.debug("calling " + org.apache.commons.lang.StringUtils.join(cmd, " "));
-// create runtime to execute external command
-		ProcessBuilder builder = new ProcessBuilder(cmd);
-		builder.redirectErrorStream(true);
-		Process pr = builder.start();
-		logs.debug("process is " + (pr.isAlive() ? "" : "not ") + "alive");
-// retrieve output from python script
-		try {
-			logs.logStream(pr.getInputStream());
-			pr.waitFor();  // wait for process to complete
-		} catch (InterruptedException e) {
-			logs.error(e.getMessage());  // "Can'tHappen"
-			return 1;
-		}
-		int status = pr.exitValue();
-		logs.debug("Process done, exit status was " + status);
-		return status;
-	}
-
 	public static class StringLogger {
 		private final Logger log;
 		private StringBuilder sb;

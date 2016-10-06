@@ -7,6 +7,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import shtykh.util.html.HtmlHelper;
+import shtykh.util.synth.MacOSVoice;
 
 /**
  * Created by shtykh on 08/04/15.
@@ -24,7 +25,8 @@ public class MainApplication {
 					AuthorsCatalogue.class,
 					PackController.class,
 					MainApplication.class,
-					StringConstants.class
+					StringConstants.class,
+					MacOSVoice.class
 			};
 			SpringApplication app = new SpringApplicationBuilder()
 					.sources(classes)
