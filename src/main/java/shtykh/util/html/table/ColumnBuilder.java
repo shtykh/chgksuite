@@ -1,4 +1,4 @@
-package shtykh.util.html;
+package shtykh.util.html.table;
 
 /**
  * Created by shtykh on 07/11/15.

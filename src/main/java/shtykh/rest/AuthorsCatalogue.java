@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import shtykh.quedit.author.SinglePerson;
 import shtykh.util.catalogue.MapCatalogue;
 import shtykh.util.html.HtmlHelper;
-import shtykh.util.html.TableBuilder;
+import shtykh.util.html.table.TableBuilder;
 import shtykh.util.html.UriGenerator;
 import shtykh.util.html.form.build.ActionBuilder;
 import shtykh.util.html.param.Parameter;
@@ -16,8 +16,8 @@ import shtykh.util.html.param.Parameter;
 import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
 
+import static shtykh.rest.Locales.getString;
 import static shtykh.util.html.HtmlHelper.*;
 import static shtykh.util.html.form.param.FormParameterType.text;
 
@@ -31,6 +31,18 @@ public class AuthorsCatalogue extends MapCatalogue<SinglePerson> implements UriG
 
 	@Autowired
 	private HtmlHelper htmlHelper;
+
+	private ActionBuilder editPersonAction() {
+		ActionBuilder editPersonAction = new ActionBuilder("/authors/edit");
+		try {
+			editPersonAction.addParam(SinglePerson.class, "firstName", getString("FIRST_NAME"), text)
+					.addParam(SinglePerson.class, "lastName", getString("LAST_NAME"), text)
+					.addParam(SinglePerson.class, "city", getString("CITY"), text);
+			return editPersonAction;
+		} catch (NoSuchFieldException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	public AuthorsCatalogue() throws FileNotFoundException {
 		super(SinglePerson.class);
@@ -57,16 +69,16 @@ public class AuthorsCatalogue extends MapCatalogue<SinglePerson> implements UriG
 			return error(e);
 		}
 		String href = href(uriList, name);
-		String body = folder.getAbsolutePath() + "<br>" + table.toString() + "<br>" + href(uriNew, "Добавить");
+		String body = folder.getAbsolutePath() + "<br>" + table.toString() + "<br>" + href(uriNew, getString("ADD"));
 		return htmlPage(name, href, body);
 	}
 
 	private TableBuilder getPersonTable() throws Exception {
-		TableBuilder table = new TableBuilder("Персонаж", "Редактировать", "Удалить");
+		TableBuilder table = new TableBuilder(getString("PERSON"), getString("EDIT"), getString("REMOVE"));
 		for (String name : keys()) {
 			URI uriEdit = uri("editform", new Parameter<>("name", name));
 			URI uriRemove = uri("remove", new Parameter<>("name", name));
-			table.addRow(name, href(uriEdit, "Редактировать"), href(uriRemove, "Удалить"));
+			table.addRow(name, href(uriEdit, getString("EDIT")), href(uriRemove, getString("REMOVE")));
 		}
 		return table;
 	}
@@ -78,7 +90,7 @@ public class AuthorsCatalogue extends MapCatalogue<SinglePerson> implements UriG
 		if (person == null) {
 			person = SinglePerson.mock();
 		}
-		return htmlPage("Отредактируйте данные", editPersonAction.buildForm(person));
+		return htmlPage(getString("PLEASE_EDIT"), editPersonAction().buildForm(person));
 	}
 
 	@ResponseBody
@@ -96,17 +108,6 @@ public class AuthorsCatalogue extends MapCatalogue<SinglePerson> implements UriG
 		return list();
 	}
 
-	private static ActionBuilder editPersonAction = new ActionBuilder("/authors/edit");
-	static {
-		try {
-			editPersonAction.addParam(SinglePerson.class, "firstName", "Имя", text)
-					.addParam(SinglePerson.class, "lastName", "Фамилия", text)
-					.addParam(SinglePerson.class, "city", "Город", text);
-		} catch (NoSuchFieldException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	@Override
 	protected String getFileName(SinglePerson p) {
 		return p.toString();
@@ -120,11 +121,5 @@ public class AuthorsCatalogue extends MapCatalogue<SinglePerson> implements UriG
 	@Override
 	public HtmlHelper htmlHelper() {
 		return htmlHelper;
-	}
-
-	public void addAll(Collection<SinglePerson> persons) {
-		for (SinglePerson person : persons) {
-			add(person);
-		}
 	}
 }

@@ -1,5 +1,6 @@
-package shtykh.util.html;
+package shtykh.util.html.table;
 
+import shtykh.util.html.TagBuilder;
 import shtykh.util.html.param.Parameter;
 
 import java.util.ArrayList;

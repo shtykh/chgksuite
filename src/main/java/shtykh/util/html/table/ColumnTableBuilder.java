@@ -1,4 +1,4 @@
-package shtykh.util.html;
+package shtykh.util.html.table;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;

@@ -4,7 +4,6 @@ import org.apache.log4j.Logger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import shtykh.util.html.HtmlHelper;
 import shtykh.util.synth.MacOSVoice;
@@ -14,7 +13,6 @@ import shtykh.util.synth.MacOSVoice;
  */
 @EnableAutoConfiguration
 @Configuration
-@ComponentScan(basePackages = "shtykh.rest")
 public class MainApplication {
 	private static final Logger log = Logger.getLogger(MainApplication.class);
 
@@ -22,10 +20,10 @@ public class MainApplication {
 		try {
 			Object[] classes = new Object[]{
 					HtmlHelper.class,
+					Locales.class,
 					AuthorsCatalogue.class,
 					PackController.class,
 					MainApplication.class,
-					StringConstants.class,
 					MacOSVoice.class
 			};
 			SpringApplication app = new SpringApplicationBuilder()

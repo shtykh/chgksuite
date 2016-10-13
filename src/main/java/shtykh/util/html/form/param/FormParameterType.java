@@ -35,9 +35,4 @@ public enum FormParameterType {
 	public String toString() {
 		return name().replace("_", "-");
 	}
-
-	public boolean isComment() {
-		return comment.equals(this);
-	}
-
 }

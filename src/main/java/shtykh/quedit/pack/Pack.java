@@ -30,7 +30,7 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static java.lang.Boolean.parseBoolean;
-import static shtykh.rest.StringConstants.getString;
+import static shtykh.rest.Locales.getString;
 import static shtykh.util.Util.*;
 import static shtykh.util.html.HtmlHelper.*;
 import static shtykh.util.html.form.param.FormParameterType.file;
@@ -164,7 +164,7 @@ public class Pack implements FormMaterial, _4Sable, Authored {
 				return home();
 			} else {
 				return htmlPage(
-						"Загрузка из " + multipartFile.getOriginalFilename(),
+						getString("LOAD_FROM_FILE", multipartFile.getOriginalFilename()),
 						logs.toString().replace("\n", "<br>"));
 			}
 		} catch (Exception e) {

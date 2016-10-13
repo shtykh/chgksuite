@@ -12,7 +12,7 @@ import shtykh.quedit.pack.PackInfo;
 import shtykh.quedit.question.Question;
 import shtykh.util.CSV;
 import shtykh.util.catalogue.FolderKeaper;
-import shtykh.util.html.ColoredTableBuilder;
+import shtykh.util.html.table.ColoredTableBuilder;
 import shtykh.util.html.HtmlHelper;
 import shtykh.util.html.UriGenerator;
 import shtykh.util.html.form.material.FormMaterial;
@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static shtykh.rest.Locales.getString;
 import static shtykh.util.Util.findMethodByName;
 import static shtykh.util.html.HtmlHelper.*;
 
@@ -46,8 +47,8 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	
 	@Autowired
 	private AuthorsCatalogue authors;
-	private HtmlHelper htmlHelper;
 	
+	private HtmlHelper htmlHelper;
 	@Autowired
 	public void setHtmlHelper(HtmlHelper htmlHelper) throws URISyntaxException {
 		this.htmlHelper = htmlHelper;
@@ -90,7 +91,7 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 				return error(e);
 			}
 			if (pack == null) {
-				return errorPage("Пакет " + id + " не был найден в папке " + folderName());
+				return errorPage(getString("PACK_NOT_FOUND", id, folderName()));
 			}
 		}
 		try {
@@ -115,8 +116,8 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 				row++;
 			}
 			URI addUri = htmlHelper.uriBuilder("/new").build();
-			table.addRow(href(addUri, "Новый пакет"));
-			return htmlPage("Пакеты", table.buildHtml());
+			table.addRow(href(addUri, getString("NEW_PACK")));
+			return htmlPage(getString("PACKS"), table.buildHtml());
 		} catch (Exception e) {
 			return error(e);
 		}
@@ -127,12 +128,12 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 	public String getPack(@PathVariable("id") String id) throws Exception {
 		String namePattern = getProperty("namePattern");
 		if (id.equals("new")) {
-			return htmlPage("Новый пакет", "Впишите id пакета в адресную строку вместо \"new\"<br>Формат имён : " + namePattern);
+			return htmlPage(getString("NEW_PACK"), getString("NEW_PACK_INSTRUCTION", namePattern));
 		}
 		Pack pack = packs.get(id);
 		if (pack == null) {
 			if (!id.matches(namePattern)) {
-				return htmlPage("Придумайте id попроще!", namePattern);
+				return htmlPage(getString("ERROR"), getString("INVALID_NAME_PATTERN", namePattern));
 			}
 			pack = addPack(id);
 		}
@@ -394,7 +395,10 @@ public class PackController extends FolderKeaper implements FormMaterial, UriGen
 
 	@ResponseBody
 	@RequestMapping(value = "{id}/download/docx", method = RequestMethod.GET, produces = "application/msword")
-	public FileSystemResource downloadDocFile(@PathVariable("id") String id, @RequestParam("path") String path, HttpServletResponse response) {
+	public FileSystemResource downloadDocFile(
+			@PathVariable("id") String id, 
+			@RequestParam("path") String path, 
+			HttpServletResponse response) {
 		response.setHeader("Content-Disposition", "attachment; filename=\"" + id + ".docx\"");
 		return new FileSystemResource(path);
 	}

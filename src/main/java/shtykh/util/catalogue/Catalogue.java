@@ -1,11 +1,9 @@
 package shtykh.util.catalogue;
 
 import org.apache.commons.io.FileExistsException;
-import shtykh.util.CSV;
 import shtykh.util.Jsonable;
 import shtykh.util.Util;
 import shtykh.util.html.form.material.FormMaterial;
-import shtykh.util.html.form.material.FormParameterMaterial;
 
 import java.io.File;
 import java.util.Collection;
@@ -18,13 +16,11 @@ import static shtykh.util.Util.read;
  */
 public abstract class Catalogue<K,T extends Jsonable> extends FolderKeaper implements FormMaterial {
 	private final Class<T> clazz;
-	protected FormParameterMaterial<CSV> keys = new FormParameterMaterial<>(new CSV(""), CSV.class);
 
 	public Catalogue(Class<T> clazz) {
 		super();
 		this.clazz = clazz;
 		initFields();
-//		refresh();
 	}
 
 	protected abstract void initFields();
@@ -47,11 +43,6 @@ public abstract class Catalogue<K,T extends Jsonable> extends FolderKeaper imple
 	@Override
 	public boolean isGood(File file) {
 		return !file.isDirectory() && ! file.getName().startsWith(".");
-	}
-
-	public String[] keys() throws Exception {
-		refresh();
-		return keys.get().asArray();
 	}
 
 	protected abstract void add(T p);
@@ -96,6 +87,9 @@ public abstract class Catalogue<K,T extends Jsonable> extends FolderKeaper imple
 	protected abstract int size();
 
 	public abstract Iterable<T> getAll();
-
-	public abstract void addAll(Collection<T> questions);
-}
+	
+	public void addAll(Collection<T> objects) {
+		for (T object : objects) {
+			add(object);
+		}
+	}}

@@ -92,13 +92,6 @@ public abstract class ListCatalogue<T extends Jsonable & Numerable> extends Cata
 	}
 
 	@Override
-	public void addAll(Collection<T> objects) {
-		for (T object : objects) {
-			add(object);
-		}
-	}
-
-	@Override
 	public void remove(Integer name) throws Exception {
 		list.remove(name);
 		super.remove(name);

@@ -10,7 +10,7 @@ import shtykh.quedit.author.Person;
 import shtykh.quedit.numerator.Numerable;
 import shtykh.util.CSV;
 import shtykh.util.Jsonable;
-import shtykh.util.html.TableRowMaterial;
+import shtykh.util.html.table.TableRowMaterial;
 import shtykh.util.html.form.material.FormMaterial;
 import shtykh.util.html.form.material.FormParameterMaterial;
 

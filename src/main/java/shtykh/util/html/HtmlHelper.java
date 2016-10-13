@@ -1,16 +1,19 @@
 package shtykh.util.html;
 
 import org.apache.http.client.utils.URIBuilder;
+import org.springframework.stereotype.Component;
 import shtykh.util.html.param.Parameter;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import static shtykh.rest.Locales.getString;
 import static shtykh.util.html.TagBuilder.tag;
 
 /**
  * Created by shtykh on 03/04/15.
  */
+@Component
 public class HtmlHelper {
 
 	private final String host;
@@ -96,7 +99,7 @@ public class HtmlHelper {
 			sb.append(stackTraceElement + "<br>");
 		}
 
-		return htmlPage("Ошибка", sb.toString());
+		return htmlPage(getString("ERROR"), sb.toString());
 	}
 
 	public String listResponce(String title, String... s) {

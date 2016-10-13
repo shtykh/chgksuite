@@ -1,8 +1,9 @@
-package shtykh.util.html;
+package shtykh.util.html.table;
 
 import org.apache.commons.lang3.StringUtils;
 import shtykh.quedit.author.Person;
 import shtykh.quedit.question.Question;
+import shtykh.util.html.UriGenerator;
 import shtykh.util.html.param.Parameter;
 
 import java.net.URI;
@@ -10,6 +11,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static shtykh.rest.Locales.getString;
 import static shtykh.util.html.HtmlHelper.href;
 
 /**
@@ -21,26 +23,17 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 	private final UriGenerator uri;
 	
 	public enum ColumnName {
-		NUMBER("Номер"),
-		COLOR("Цвет"),
-		ANSWER("Ответ"),
-		EDIT("Редактировать"),
-		AUTHORS("Авторы"),
-		READ("Прочитать"),
-		REPLACE("В запас"), 
-		REMOVE("Удалить"), 
-		UP("Вверх"), 
-		DOWN("Вниз")
+		NUMBER,
+		COLOR,
+		ANSWER,
+		EDIT,
+		AUTHORS,
+		SAY,
+		REPLACE,
+		REMOVE,
+		UP,
+		DOWN
 		;
-		
-		private final String name;
-
-		private ColumnName(String name) {
-			this.name = name;
-		}
-		public String getName() {
-			return name;
-		}
 	}
 
 	public QuestionTableBuilder(Collection<Question> questions, UriGenerator uri, ColumnName... columnNames) {
@@ -52,7 +45,7 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			columnNames = ColumnName.values();
 		}
 		for (ColumnName columnName : columnNames) {
-			addColumn(columnName.getName(), columns.get(columnName));
+			addColumn(getString(columnName.name()), columns.get(columnName));
 		}
 		for (Question question : questions) {
 			addRow(question);
@@ -88,14 +81,14 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			@Override
 			public String getCell(Question question) {
 				URI uriEdit = uri.uri("editForm", indexParam(question));
-				return href(uriEdit, "Редактировать");
+				return href(uriEdit, getString("EDIT"));
 			}
 		});
-		columns.put(ColumnName.READ, new ColumnBuilder<Question>() {
+		columns.put(ColumnName.SAY, new ColumnBuilder<Question>() {
 			@Override
 			public String getCell(Question question) {
 				URI uriEdit = uri.uri("read", indexParam(question));
-				return href(uriEdit, "Прочитать");
+				return href(uriEdit, getString("SAY"));
 			}
 		});
 		columns.put(ColumnName.AUTHORS, new ColumnBuilder<Question>() {
@@ -103,7 +96,7 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			public String getCell(Question question) {
 				URI uriEditAuthor = uri.uri("editAuthorForm", indexParam(question));
 				Person author = question.getAuthor();
-				String authorString = "Добавить автора";
+				String authorString = getString("ADD_AUTH");
 				if (author != null && StringUtils.isNotBlank(author.toString())) {
 					authorString = author.toString();
 				}
@@ -114,14 +107,14 @@ public class QuestionTableBuilder extends ColumnTableBuilder<Question> {
 			@Override
 			public String getCell(Question question) {
 				URI uriReplace = uri.uri("copyTo", indexParam(question));
-				return href(uriReplace, "В запас");
+				return href(uriReplace, getString("REPLACE"));
 			}
 		});
 		columns.put(ColumnName.REMOVE, new ColumnBuilder<Question>() {
 			@Override
 			public String getCell(Question question) {
 				URI uriRemove = uri.uri("remove", indexParam(question));
-				return href(uriRemove, "Удалить");
+				return href(uriRemove, getString("REMOVE"));
 			}
 		});
 		columns.put(ColumnName.UP, new ColumnBuilder<Question>() {

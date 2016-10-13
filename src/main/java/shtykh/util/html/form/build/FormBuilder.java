@@ -11,6 +11,7 @@ import shtykh.util.html.param.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 
+import static shtykh.rest.Locales.getString;
 import static shtykh.util.html.TagBuilder.tag;
 import static shtykh.util.html.form.param.FormParameterType.*;
 
@@ -44,6 +45,9 @@ public class FormBuilder {
 				break;
 			case select:
 				form = selectForm(parameter);
+				break;
+			case comment:
+				form = parameter.getValueString();
 				break;
 			default:
 				form = input(parameter);
@@ -112,21 +116,17 @@ public class FormBuilder {
 
 	public String build(HTTPMethods method){
 		StringBuilder sb = new StringBuilder();
-		sb.append(tag("legend").build("Form for " + action));
-		sb.append(input(reset, "Reset"));
+		sb.append(tag("legend").build(getString("FORM_FOR", action)));
+		sb.append(input(reset, getString("RESET")));
 		for(Parameter member: members) {
 			if (member instanceof FormParameter) {
 				FormParameter parameter = (FormParameter) member;
-				if (parameter.getType().isComment()) {
-					sb.append(tag("p").build(parameter));
-				} else {
-					sb.append(tag("p").build(formFor(parameter)));
-				}
+				sb.append(tag("p").build(formFor(parameter)));
 			} else {
 				sb.append(tag("p").build(member));
 			}
 		}
-		sb.append(input(submit, "Submit"));
+		sb.append(input(submit, getString("SUBMIT")));
 		String fieldset = tag("fieldset").build(sb.toString());
 		return tag("form")
 				.params(

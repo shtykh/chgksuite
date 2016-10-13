@@ -15,6 +15,8 @@ import shtykh.util.html.form.material.FormMaterial;
 
 import java.io.File;
 
+import static shtykh.rest.Locales.getString;
+
 /**
  * Created by shtykh on 08/10/15.
  */
@@ -156,9 +158,8 @@ public class PackInfo implements FormMaterial, Authored, Jsonable, _4Sable {
 		} else {
 			tester.sort();
 			String firstSymbol = (StringUtils.isBlank(metaInfo.get())?"# ":"");
-			String who = author.getPersonList().size() > 1 ? "Редакторы выражают":"Редактор выражает";
-			return firstSymbol + who + " благодарность за помощь и ценные замечания в подготовке пакета следующим людям:\n#" +
-					tester;
+			String who = author.getPersonList().size() == 1 ? getString("EDITOR_IS") : getString("EDITORS_ARE");
+			return firstSymbol + who + getString("THANKFUL_TO", tester);
 		}
 	}
 

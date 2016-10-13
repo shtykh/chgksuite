@@ -58,6 +58,15 @@ public class ActionBuilder {
 		return addParam(clazz, fieldName, fieldName, fieldName, type);
 	}
 
+	public ActionBuilder addParam(ActionBuilderParameter param) throws NoSuchFieldException {
+		Field field = param.getClazz().getDeclaredField(param.getFieldName());
+		FormParameterSignature formParameterSignature = new FormParameterSignature(
+				param.getParameterName(), 
+				param.getLabel(), 
+				param.getType());
+		return addParam(field, formParameterSignature);
+	}
+	
 	public ActionBuilder addParam(Class<? extends FormMaterial> clazz,
 								  String fieldName,
 								  String label,

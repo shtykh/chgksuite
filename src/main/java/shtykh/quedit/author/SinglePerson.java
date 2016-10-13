@@ -10,14 +10,15 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static shtykh.rest.Locales.getString;
 
 /**
  * Created by shtykh on 01/10/15.
  */
 public class SinglePerson extends Person implements FormMaterial, Jsonable {
-	private FormParameterMaterial<String> lastName = new FormParameterMaterial<>("Фамилия", String.class);
-	private FormParameterMaterial<String> firstName = new FormParameterMaterial<>("Имя", String.class);
-	private FormParameterMaterial<String> city = new FormParameterMaterial<>("Город", String.class);
+	private FormParameterMaterial<String> lastName = new FormParameterMaterial<>(getString("LAST_NAME"), String.class);
+	private FormParameterMaterial<String> firstName = new FormParameterMaterial<>(getString("FIRST_NAME"), String.class);
+	private FormParameterMaterial<String> city = new FormParameterMaterial<>(getString("CITY"), String.class);
 
 	public SinglePerson() {
 		this("", "", "");
@@ -54,7 +55,7 @@ public class SinglePerson extends Person implements FormMaterial, Jsonable {
 	}
 
 	public static SinglePerson mock() {
-		return new SinglePerson("Имя", "Фамилия", "Город");
+		return new SinglePerson(getString("FIRST_NAME"), getString("LAST_NAME"), getString("CITY"));
 	}
 
 	@Override
